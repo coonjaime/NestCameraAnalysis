@@ -3,6 +3,8 @@
   #
   #
 
+#Code updated at: https://github.com/coonjaime/NestCameraAnalysis
+
 #Exploration of Nest Camera Data collected in
   #2015, 2016, and 2021
 #Species:
@@ -11,6 +13,10 @@
   #Bobolink (BOBO)
   #Grasshopper sparrow (GRSP)
   #etc
+#Other Acronyms
+  #PB = Parent Behavior (from Access file)
+  #NB = Nestling Behavior (from Access file)
+  #VM = Video Metadata (from Access file)
 #_____________________________________________________####
 ####1. SETUP & IMPORT ####
 
@@ -45,15 +51,12 @@ NestlingNums <- read_excel("Initial Data/NestlingNums21_1.2.22.xlsx")
 #__1c. COMBINING DATASETS                             ####
 
 #combine and add key codes for each person for 'Behavior ID'
-#Wendy:001
-#Jaime:002
-#Josh:003
-#Thea:004
-#Hannah:005
-#Ethan:006
-#Molly:007
-#Claudette:008
-#filter out 2015 and 2016 from everyone but Jaime's
+#Wendy:001 #Jaime:002 #Josh:003 #Thea:004
+#Hannah:005 #Ethan:006 #Molly:007 #Claudette:008
+
+#need to filter out 2015 and 2016 from everyone but Jaime's
+
+#WENDY
 
 #JAIME
 JJC_VM_cleaned=JJC_VM%>%
