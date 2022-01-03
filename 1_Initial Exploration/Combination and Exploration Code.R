@@ -24,6 +24,8 @@
 setwd("~/NestCameraAnalysis/1_Initial Exploration")
 #feel free to add your own setup if using this code
 
+#RStudio Cloud setup
+setwd("/cloud/project/1_Initial Exploration")
 #__1a. PACKAGES                                       ####
 #install.packages('easypackages')#do once to manage packages
 library('easypackages')#load package managing package
