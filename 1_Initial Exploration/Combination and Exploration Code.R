@@ -34,6 +34,15 @@ packages('tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate')
 
 #__1b. IMPORTING SEPARATE DATASETS                     ####
 
+veg<-read_csv("Initial Data/NestVeg_2.Mar.2022.csv")%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  filter(Year>2014)%>%
+  group_by(NestID)%>%
+  mutate(LitDepth=(Litdepth+Litdepth2+Litdepth3)/3)%>%
+  mutate(Robel=(Robel1+Robel2+Robel3+Robel4)/4)%>%
+  summarize_at(vars(Fear, Csg, Wsg, Forb,Legume,Covlit,Robel,LitDepth),mean)
+
 JJC_NB <- read_excel("Initial Data/JJC_Nestling Behavior_1.2.22.xlsx")
 JJC_PB <- read_excel("Initial Data/JJC_Parent Behavior_1.2.22.xlsx")
 JJC_VM <- read_excel("Initial Data/JJC_Video_Master_1.2.22.xlsx")
@@ -84,13 +93,14 @@ JJC_VM_cleaned=JJC_VM%>%
   mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%
   select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
   mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
-  
+names(JJC_NB_cleaned)
+
 JJC_NB_cleaned=JJC_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
   add_column("CoderID"="003")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JJC_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,FilmingDurationInSec),
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
     by="NestIDSession")%>%
   filter(!grepl('KLT RWBL 4 21 (1)', NestIDSession)) #duplicate
 
@@ -99,7 +109,7 @@ JJC_PB_cleaned=JJC_PB%>%
   add_column("CoderID"="003")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JJC_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,FilmingDurationInSec),
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!grepl('KLT RWBL 4 21 (1)', NestIDSession)) #duplicate
 
@@ -133,7 +143,7 @@ JNA_NB_cleaned=JNA_NB%>%
   add_column("CoderID"="002")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JNA_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,FilmingDurationInSec),
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!grepl('2015|2016', Year))
 
@@ -142,7 +152,7 @@ JNA_PB_cleaned=JNA_PB%>%
   add_column("CoderID"="002")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JNA_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,FilmingDurationInSec),
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!grepl('2015|2016', Year))
 
@@ -176,7 +186,7 @@ MFM_NB_cleaned=MFM_NB%>%
   add_column("CoderID"="002")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(MFM_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,FilmingDurationInSec),
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
     by="NestIDSession")%>%
   filter(!grepl('2015|2016', Year))
 
@@ -185,7 +195,7 @@ MFM_PB_cleaned=MFM_PB%>%
   add_column("CoderID"="002")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(MFM_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,FilmingDurationInSec),
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!grepl('2015|2016', Year))
 
@@ -202,7 +212,7 @@ VM=VM_combined%>%
   filter(!grepl('RANC', NestID))%>%
   filter(!grepl('BAD DATA', NestIDSession))%>%
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
-  mutate(NestIDn=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
+  mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   
   #filtering out incomplete nests as of 1.2.22:       
   filter(!grepl(' 235_DICK_21_21_1', NestIDSession))%>%
@@ -222,10 +232,18 @@ VM=VM_combined%>%
                                '100% - 85%'="85-100",
                                '49% - 0%'="0-49",
                                '84% - 50%'="50-84"))%>%
-  mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M'))%>%
-  mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M'))%>%
+  mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M:%S'))%>%
+  mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M:%S'))%>%
+  mutate(FilmEnd=(hour(hms(FilmEndTime)))+(minute(hms(FilmEndTime))/60))%>%
+  mutate(FilmStart=(hour(hms(FilmStartTime)))+(minute(hms(FilmStartTime))/60))%>%
+  mutate(FilmDuration=FilmEnd-FilmStart)%>%
+  filter(FilmDuration > .5)%>%
+ # mutate(FilmDuration=
+ #          format(hms(FilmEndTime)-hms(FilmStartTime)))%>%
   mutate(OrdDate=yday(Date))%>%
   mutate_at(vars(Species), ~replace_na(., 'DICK'))
+
+summary(VM$FilmDuration)
 
 
 NB=NB_combined%>%
@@ -236,7 +254,7 @@ NB=NB_combined%>%
   filter(!grepl('RANC', NestID))%>%
   filter(!grepl('BAD DATA', NestIDSession))%>%
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
-  mutate(NestIDn=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
+  mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   
   #filtering out incomplete nests as of 1.2.22:       
   filter(!grepl(' 235_DICK_21_21_1', NestIDSession))%>%
@@ -256,10 +274,13 @@ NB=NB_combined%>%
                                '100% - 85%'="85-100",
                                '49% - 0%'="0-49",
                                '84% - 50%'="50-84"))%>%
-  mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M'))%>%
-  mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M'))%>%
   mutate(OrdDate=yday(Date))%>%
+  mutate(BStart=StartMinute*60+ StartSecond)%>%
+  mutate(BEnd  =  EndMinute*60+ EndSecond)%>%
+  mutate(Duration_Sec=BEnd-BStart)%>%
   mutate_at(vars(Species), ~replace_na(., 'DICK'))
+
+names(PB_combined)
 
 PB=PB_combined%>%
   filter(!grepl('0', VideoClip))%>%
@@ -289,8 +310,14 @@ PB=PB_combined%>%
                                '100% - 85%'="85-100",
                                '49% - 0%'="0-49",
                                '84% - 50%'="50-84"))%>%
-  mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M'))%>%
-  mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M'))%>%
+  mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M:%S'))%>%
+  mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M:%S'))%>%
+  mutate(FilmEnd=(hour(hms(FilmEndTime)))+(minute(hms(FilmEndTime))/60))%>%
+  mutate(FilmStart=(hour(hms(FilmStartTime)))+(minute(hms(FilmStartTime))/60))%>%
+  mutate(FilmDuration=FilmEnd-FilmStart)%>%
+  mutate(ClipStart=FilmStart+(VideoClip-1)*(20/60))%>%
+  mutate(BehaviorStart=ClipStart+(StartMinute/60))%>%
+  filter(FilmDuration > .5)%>%
   mutate(OrdDate=yday(Date))%>%
   mutate_at(vars(Species), ~replace_na(., 'DICK'))
 
@@ -303,24 +330,24 @@ PB=PB_combined%>%
 PB_sum_bySession=PB%>%
   #filter(!grepl('TRUE', AbleSeeDipping))%>% 
   #filter(!grepl('0-49', NestVisability))%>% 
-  group_by(Species,NestIDSession,NestID,SessionY,BehaviorCode,FilmingDurationInSec)%>%
+  group_by(Species,NestIDSession,NestID,SessionY,BehaviorCode,FilmDuration, FilmStart)%>%
   summarize(BehaviorCount = n())%>%
-  mutate(Beh_per_h=BehaviorCount/(FilmingDurationInSec/(60*60)))
+  mutate(Beh_per_h=BehaviorCount/(FilmDuration))
 
 ##calculating behavior rates per hour by the clip
 PB_sum_byClip=PB%>%
   #filter(!grepl('TRUE', AbleSeeDipping))%>% 
   #filter(!grepl('0-49', NestVisability))%>% 
-  group_by(Species,VideoClip,NestIDSession,NestID,SessionY,BehaviorCode,FilmingDurationInSec)%>%
+  group_by(Species,VideoClip,NestIDSession,NestID,SessionY,BehaviorCode,FilmDuration,ClipStart)%>%
   summarize(BehaviorCount = n())%>%
-  mutate(Beh_per_h=BehaviorCount/(FilmingDurationInSec/(60*60)))
+  mutate(Beh_per_h=BehaviorCount/(FilmDuration))
 
 #calculating the percent of visible feeding attempts had dips by session
 PB_dips_bySession=PB%>%
   filter(!grepl(FALSE, AbleSeeDipping),na.rm=TRUE)%>%
   filter(grepl("Provisioning", BehaviorCode),na.rm=TRUE)%>% 
   #filter(!grepl('0-49', NestVisability))%>% 
-  group_by(Species,NestIDSession,NestID,SessionY,FilmingDurationInSec)%>%
+  group_by(Species,NestIDSession,NestID,SessionY,FilmDuration)%>%
   summarize(
     nDips=n(),
     sumDips = sum(DippingPresent))%>%
@@ -331,7 +358,7 @@ PB_dips_bySpecies=PB%>%
   filter(!grepl(FALSE, AbleSeeDipping),na.rm=TRUE)%>%
   filter(grepl("Provisioning", BehaviorCode),na.rm=TRUE)%>% 
   #filter(!grepl('0-49', NestVisability))%>% 
-  group_by(Species,NestIDSession,NestID,SessionY,FilmingDurationInSec)%>%
+  group_by(Species,NestIDSession,NestID,SessionY,FilmDuration)%>%
   summarize(
     nDips=n(),
     sumDips = sum(DippingPresent))%>%
@@ -344,3 +371,65 @@ PB_dips_bySpecies=PB%>%
 #_____________________________________________________####
 ####3. Prelim analysis ####
 
+#Provisioning and tall fescue
+
+#add nest ID column from VM to PB
+
+ProvData=PB_sum_byClip%>%
+  filter(grepl('Arrive at Nest',BehaviorCode))%>%
+  left_join(veg,by="NestID")%>%
+  left_join(VM,select(NumHosts,NumBHCO),by="NestID")%>%
+  filter(TotalNestling>0)
+
+length(unique(ProvData$NestID))
+names(ProvData)
+
+Model1=glmmTMB(Beh_per_h~NumBHCO+Csg+TotalNestling+(1|NestIDSession.x), data=ProvData,family="gaussian")
+summary(Model1)
+
+BegData=NB%>%
+  left_join(VM,select(NumHosts,NumBHCO,TotalNestling,OrdDate),by="NestID")%>%
+  filter(BehaviorCode=="Begging")%>%
+  group_by(NestID,BehaviorCode,NestIDSession.y,TotalNestling.y,NumBHCO.y,NumHosts.y)%>%
+  summarize(BegDuration = sum(Duration_Sec))%>%
+  mutate(PercentTime=BegDuration/(20*60))%>%
+ filter(TotalNestling.y>0)
+
+
+
+
+
+PercentTime=glmmTMB(PercentTime~NumBHCO.y+NumHosts.y+NestlingAgeDays.y+(1|NestIDSession.y),family="tweedie",data=BegData)
+summary(PercentTime)
+
+
+
+NestlingDiet=PB%>%
+  filter(grepl("Provisioning", BehaviorCode),na.rm=TRUE)%>% 
+  filter(grepl("DICK",Species),na.rm=TRUE)%>%
+  filter(!grepl('0-49', NestVisability))%>% 
+  group_by(Species,ArthSize,ArthID)%>%
+  summarize(count=n())%>%
+  mutate(percent=count/1065)
+
+NestChecks=read_csv("Initial Data/NestChecks_2.Mar.2022.csv")%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  mutate(Date=format(mdy(Date),'%m/%d/%y'))%>%
+  mutate(Year=year(mdy(Date)))%>%
+  filter(Year>2014)%>%
+  filter(grepl('Nestling', Stage))%>% 
+  group_by(NestID)%>%
+  mutate(MaxBHCO=max(ParasiteChicks),
+         MaxHost=max(HostChicks),
+         MaxChicks=MaxHost+MaxBHCO)%>%
+  arrange(NestID, VisitID) %>% 
+  group_by(NestID) %>% 
+  summarise_all(last)%>%
+  left_join(veg,by="NestID")
+
+Model1=glm(MaxBHCO~Fear, data=NestChecks,family="poisson")
+summary(Model1)
+
+
+names(NestChecks)
