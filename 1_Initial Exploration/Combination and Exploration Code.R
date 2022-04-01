@@ -21,7 +21,7 @@
 ####1. SETUP & IMPORT ####
 
 #Jaime's computer setup
-setwd("~/NestCameraAnalysis/1_Initial Exploration")
+#setwd("~/NestCameraAnalysis/1_Initial Exploration")
 #feel free to add your own setup if using this code
 
 #RStudio Cloud setup
@@ -97,7 +97,7 @@ names(JJC_NB_cleaned)
 
 JJC_NB_cleaned=JJC_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
-  add_column("CoderID"="003")%>%
+  add_column("CoderID"="002")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JJC_VM_cleaned,select(
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
@@ -106,7 +106,7 @@ JJC_NB_cleaned=JJC_NB%>%
 
 JJC_PB_cleaned=JJC_PB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
-  add_column("CoderID"="003")%>%
+  add_column("CoderID"="002")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JJC_VM_cleaned,select(
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
@@ -122,7 +122,7 @@ JNA_VM_cleaned=JNA_VM%>%
          SessionY=Session)%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
-  filter(!grepl('2015|2016', Year))%>%
+  filter(!(Year<2021))%>% 
   rename(NumHosts = Dickcissel,
          NumBHCO  = Cowbird)%>%
   left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
@@ -145,8 +145,8 @@ JNA_NB_cleaned=JNA_NB%>%
   left_join(JNA_VM_cleaned,select(
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
-  filter(!grepl('2015|2016', Year))
-
+  filter(!(Year<2021)) 
+  
 JNA_PB_cleaned=JNA_PB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
   add_column("CoderID"="002")%>%
@@ -159,13 +159,13 @@ JNA_PB_cleaned=JNA_PB%>%
 #MOLLY
 MFM_VM_cleaned=MFM_VM%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
-  add_column("CoderID"="003")%>%
+  add_column("CoderID"="007")%>%
   rename(FilmStartTime=StartTime,
          FilmEndTime=EndTime,
          SessionY=Session)%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
-  filter(!grepl('2015|2016', Year))%>%
+  filter(!(Year<2021))%>% 
   rename(NumHosts = Dickcissel,
          NumBHCO  = Cowbird)%>%
   left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
@@ -183,29 +183,31 @@ MFM_VM_cleaned=MFM_VM%>%
 
 MFM_NB_cleaned=MFM_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
-  add_column("CoderID"="002")%>%
+  add_column("CoderID"="007")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(MFM_VM_cleaned,select(
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
     by="NestIDSession")%>%
-  filter(!grepl('2015|2016', Year))
-
+  filter(!(Year<2021)) 
+  
 MFM_PB_cleaned=MFM_PB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
-  add_column("CoderID"="002")%>%
+  add_column("CoderID"="007")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(MFM_VM_cleaned,select(
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
-  filter(!grepl('2015|2016', Year))
-
+  filter(!(Year<2021)) 
+  
 compare_df_cols(JJC_PB_cleaned,JNA_PB_cleaned) #to compare before merging
 
 NB_combined=rbind(JJC_NB_cleaned,JNA_NB_cleaned,MFM_NB_cleaned)
 PB_combined=rbind(JJC_PB_cleaned,JNA_PB_cleaned,MFM_PB_cleaned)
 VM_combined=rbind(JJC_VM_cleaned,JNA_VM_cleaned,MFM_VM_cleaned)
 
-#__1d. DATA CLEANING                                  ####
+#__1d. DATA CLEANING OF WHOLE DATASET                                  ####
+##RIS_10_10 needs to be filtered out
+
 VM=VM_combined%>%
   filter(!grepl('PTER', NestIDSession))%>%
   filter(!grepl('EJT', NestID))%>%
@@ -213,17 +215,16 @@ VM=VM_combined%>%
   filter(!grepl('BAD DATA', NestIDSession))%>%
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
-  
-  #filtering out incomplete nests as of 1.2.22:       
-  filter(!grepl(' 235_DICK_21_21_1', NestIDSession))%>%
-  filter(!grepl(' KLT_EAME_1_21_1', NestIDSession))%>%
-  filter(!grepl(' KLT_EAME_2_21_1', NestIDSession))%>%
-  filter(!grepl(' 235_GRSP_2_21_1', NestIDSession))%>%
-  filter(!grepl(' KLT_RWBL_6_21_1', NestIDSession))%>%
-  filter(!grepl(' RIE_RWBL_11_21_2', NestIDSession))%>%
-  filter(!grepl(' KLT_RWBL_23_21_1', NestIDSession))%>%
-  filter(!grepl(' RIE_RWBL_26_21_1', NestIDSession))%>%
-  
+  #filtering out incomplete nests as of 1.2.22:      
+  #Epsilon != "96002.txt"
+  filter(as.factor(NestIDSession) =='235_DICK_21_21_1')%>% #figure out why grepl isn't working anymore
+  filter(!grepl('KLT_EAME_1_21_1', NestIDSession))%>%
+  filter(!grepl('KLT_EAME_2_21_1', NestIDSession))%>%
+  filter(!grepl('235_GRSP_2_21_1', NestIDSession))%>%
+  filter(!grepl('KLT_RWBL_6_21_1', NestIDSession))%>%
+  filter(!grepl('RIE_RWBL_11_21_2', NestIDSession))%>%
+  filter(!grepl('KLT_RWBL_23_21_1', NestIDSession))%>%
+  filter(!grepl('RIE_RWBL_26_21_1', NestIDSession))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
   mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
@@ -233,7 +234,7 @@ VM=VM_combined%>%
                                '49% - 0%'="0-49",
                                '84% - 50%'="50-84"))%>%
   mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M:%S'))%>%
-  mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M:%S'))%>%
+  mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M:%S')) %>%
   mutate(FilmEnd=(hour(hms(FilmEndTime)))+(minute(hms(FilmEndTime))/60))%>%
   mutate(FilmStart=(hour(hms(FilmStartTime)))+(minute(hms(FilmStartTime))/60))%>%
   mutate(FilmDuration=FilmEnd-FilmStart)%>%
@@ -323,6 +324,7 @@ PB=PB_combined%>%
 
 #_____________________________________________________####
 ####2. Calculate Durations and Rates ####
+
 
 #Parent behavior rates
 
