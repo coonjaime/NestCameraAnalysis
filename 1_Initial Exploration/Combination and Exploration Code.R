@@ -208,23 +208,12 @@ VM_combined=rbind(JJC_VM_cleaned,JNA_VM_cleaned,MFM_VM_cleaned)
 #__1d. DATA CLEANING OF WHOLE DATASET                                  ####
 ##RIS_10_10 needs to be filtered out
 
+summary(VM$NestIDSession)
 VM=VM_combined%>%
   filter(!grepl('PTER', NestIDSession))%>%
   filter(!grepl('EJT', NestID))%>%
   filter(!grepl('RANC', NestID))%>%
   filter(!grepl('BAD DATA', NestIDSession))%>%
-  mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
-  mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
-  #filtering out incomplete nests as of 1.2.22:      
-  #Epsilon != "96002.txt"
-  filter(as.factor(NestIDSession) =='235_DICK_21_21_1')%>% #figure out why grepl isn't working anymore
-  filter(!grepl('KLT_EAME_1_21_1', NestIDSession))%>%
-  filter(!grepl('KLT_EAME_2_21_1', NestIDSession))%>%
-  filter(!grepl('235_GRSP_2_21_1', NestIDSession))%>%
-  filter(!grepl('KLT_RWBL_6_21_1', NestIDSession))%>%
-  filter(!grepl('RIE_RWBL_11_21_2', NestIDSession))%>%
-  filter(!grepl('KLT_RWBL_23_21_1', NestIDSession))%>%
-  filter(!grepl('RIE_RWBL_26_21_1', NestIDSession))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
   mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
@@ -233,6 +222,17 @@ VM=VM_combined%>%
                                '100% - 85%'="85-100",
                                '49% - 0%'="0-49",
                                '84% - 50%'="50-84"))%>%
+  mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
+  mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
+  #filtering out incomplete nests as of 1.2.22:
+  filter(!grepl('235_DICK_21_21_1',NestIDSession))%>% #figure out why grepl isn't working anymore
+  filter(!grepl('KLT_EAME_1_21_1', NestIDSession))%>%
+  filter(!grepl('KLT_EAME_2_21_1', NestIDSession))%>%
+  filter(!grepl('235_GRSP_2_21_1', NestIDSession))%>%
+  filter(!grepl('KLT_RWBL_6_21_1', NestIDSession))%>%
+  filter(!grepl('RIE_RWBL_11_21_2', NestIDSession))%>%
+  filter(!grepl('KLT_RWBL_23_21_1', NestIDSession))%>%
+  filter(!grepl('RIE_RWBL_26_21_1', NestIDSession))%>%
   mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M:%S'))%>%
   mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M:%S')) %>%
   mutate(FilmEnd=(hour(hms(FilmEndTime)))+(minute(hms(FilmEndTime))/60))%>%
@@ -258,6 +258,12 @@ NB=NB_combined%>%
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   
   #filtering out incomplete nests as of 1.2.22:       
+  
+  mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
+  mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
+  mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  
   filter(!grepl(' 235_DICK_21_21_1', NestIDSession))%>%
   filter(!grepl(' KLT_EAME_1_21_1', NestIDSession))%>%
   filter(!grepl(' KLT_EAME_2_21_1', NestIDSession))%>%
@@ -267,10 +273,6 @@ NB=NB_combined%>%
   filter(!grepl(' KLT_RWBL_23_21_1', NestIDSession))%>%
   filter(!grepl(' RIE_RWBL_26_21_1', NestIDSession))%>%
   
-  mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
-  mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
-  mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
-  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   mutate(NestVisability=recode(NestVisability, 
                                '100% - 85%'="85-100",
                                '49% - 0%'="0-49",
@@ -292,6 +294,10 @@ PB=PB_combined%>%
   filter(!grepl('BAD DATA', NestIDSession))%>%
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
   mutate(NestIDn=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
+  mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
+  mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
+  mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   
   #filtering out incomplete nests as of 1.2.22:       
   filter(!grepl(' 235_DICK_21_21_1', NestIDSession))%>%
@@ -303,10 +309,6 @@ PB=PB_combined%>%
   filter(!grepl(' KLT_RWBL_23_21_1', NestIDSession))%>%
   filter(!grepl(' RIE_RWBL_26_21_1', NestIDSession))%>%
   
-  mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
-  mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
-  mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
-  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   mutate(NestVisability=recode(NestVisability, 
                                '100% - 85%'="85-100",
                                '49% - 0%'="0-49",
@@ -398,12 +400,8 @@ BegData=NB%>%
  filter(TotalNestling.y>0)
 
 
-
-
-
 PercentTime=glmmTMB(PercentTime~NumBHCO.y+NumHosts.y+NestlingAgeDays.y+(1|NestIDSession.y),family="tweedie",data=BegData)
 summary(PercentTime)
-
 
 
 NestlingDiet=PB%>%
