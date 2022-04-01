@@ -412,13 +412,15 @@ NestlingDiet=PB%>%
   summarize(count=n())%>%
   mutate(percent=count/1065)
 
+#To do: figure out how to extract species and put it in it's own column
 NestChecks=read_csv("Initial Data/NestChecks_2.Mar.2022.csv")%>%
   clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   mutate(Date=format(mdy(Date),'%m/%d/%y'))%>%
   mutate(Year=year(mdy(Date)))%>%
   filter(Year>2014)%>%
-  filter(grepl('Nestling', Stage))%>% 
+  #To do: recode Fledge as Fledged, Cowbird fledge as Cowbird fledged
+  filter(grepl('Nestling|Fledged|Abandoned|Dead|Cowbird fledged|Cowbird fledge|Fledge', Stage))%>% 
   group_by(NestID)%>%
   mutate(MaxBHCO=max(ParasiteChicks),
          MaxHost=max(HostChicks),
@@ -427,6 +429,11 @@ NestChecks=read_csv("Initial Data/NestChecks_2.Mar.2022.csv")%>%
   group_by(NestID) %>% 
   summarise_all(last)%>%
   left_join(veg,by="NestID")
+
+summary(as.factor(NestChecks$Year))
+summary(as.factor(NestChecks$Stage))
+summary(as.factor(NestChecks$Species))
+
 
 Model1=glm(MaxBHCO~Fear, data=NestChecks,family="poisson")
 summary(Model1)
