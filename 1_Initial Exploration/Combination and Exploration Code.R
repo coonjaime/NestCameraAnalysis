@@ -318,6 +318,8 @@ VM=VM_combined%>%
                                '84% - 50%'="50-84"))%>%
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
+  add_column("Parasitized")%>%
+  mutate(Parasitized=as.logical(NumBHCO))%>%
   #filtering out incomplete nests as of 1.2.22:
   filter(!grepl('235_DICK_21_21_1',NestIDSession))%>% #figure out why grepl isn't working anymore
   filter(!grepl('KLT_EAME_1_21_1', NestIDSession))%>%
@@ -351,12 +353,12 @@ NB=NB_combined%>%
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   
-  #filtering out incomplete nests as of 1.2.22:       
-  
   mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
   mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  
+  #filtering out incomplete nests as of 1.2.22:  
   
   filter(!grepl(' 235_DICK_21_21_1', NestIDSession))%>%
   filter(!grepl(' KLT_EAME_1_21_1', NestIDSession))%>%
@@ -513,8 +515,9 @@ NestChecks=read_csv("Initial Data/NestChecks_2.Mar.2022.csv")%>%
   mutate(Date=format(mdy(Date),'%m/%d/%y'))%>%
   mutate(Year=year(mdy(Date)))%>%
   filter(Year>2014)%>%
-  #To do: recode Fledge as Fledged, Cowbird fledge as Cowbird fledged
-  filter(grepl('Nestling|Fledged|Abandoned|Dead|Cowbird fledged|Cowbird fledge|Fledge', Stage))%>% 
+  mutate(Stage = replace(Stage, Stage=="Fledge", "Fledged"))%>%
+  mutate(Stage = replace(Stage, Stage=="Cowbird fledge", "Cowbird fledged"))%>%
+  filter(grepl('Nestling|Fledged|Abandoned|Dead|Cowbird fledged', Stage))%>% 
   group_by(NestID)%>%
   mutate(MaxBHCO=max(ParasiteChicks),
          MaxHost=max(HostChicks),
@@ -534,3 +537,19 @@ summary(Model1)
 
 
 names(NestChecks)
+
+#_____________________________________________________####
+####4. Descriptive Data ####
+
+#Dipping percentages
+DipPercent_bySpecies <- ggplot(PB_dips_bySpecies,aes(x=Species,y=mean))+
+  geom_col(aes(color="black",fill=Species))+
+  scale_x_discrete(labels=c("Dickcissel","Grasshopper Sparrow","Red-winged Blackbird"))+
+  scale_fill_manual(values=c("goldenrod1","peru","red3"))+
+  scale_color_manual(values = "black")+
+  scale_y_continuous(limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
+  labs(y="Percent of Provisioning Events with Dipping",x="")+
+  theme_minimal()+
+  theme(legend.position = "none")
+DipPercent_bySpecies
+
