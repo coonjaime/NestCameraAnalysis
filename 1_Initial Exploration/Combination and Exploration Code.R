@@ -162,7 +162,7 @@ JNA_PB_cleaned=JNA_PB%>%
   left_join(JNA_VM_cleaned,select(
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
-  filter(!grepl('2015|2016', Year))
+  filter(!(Year<2021))
 
 #HANNAH
 HKG_VM_cleaned=HKG_VM%>%
@@ -205,7 +205,7 @@ HKG_PB_cleaned=HKG_PB%>%
   left_join(HKG_VM_cleaned,select(
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
-  filter(!grepl('2015|2016', Year))
+  filter(!(Year<2021))
 
 #MOLLY
 MFM_VM_cleaned=MFM_VM%>%
@@ -295,9 +295,9 @@ CER_PB_cleaned=CER_PB%>%
   
 compare_df_cols(JJC_PB_cleaned,JNA_PB_cleaned) #to compare before merging
 
-NB_combined=rbind(JJC_NB_cleaned,JNA_NB_cleaned,MFM_NB_cleaned)
-PB_combined=rbind(JJC_PB_cleaned,JNA_PB_cleaned,MFM_PB_cleaned)
-VM_combined=rbind(JJC_VM_cleaned,JNA_VM_cleaned,MFM_VM_cleaned)
+NB_combined=rbind(JJC_NB_cleaned,JNA_NB_cleaned,HKG_NB_cleaned,MFM_NB_cleaned,CER_NB_cleaned)
+PB_combined=rbind(JJC_PB_cleaned,JNA_PB_cleaned,HKG_PB_cleaned,MFM_PB_cleaned,CER_PB_cleaned)
+VM_combined=rbind(JJC_VM_cleaned,JNA_VM_cleaned,HKG_VM_cleaned,MFM_VM_cleaned,CER_VM_cleaned)
 
 #__1d. DATA CLEANING OF WHOLE DATASET                                  ####
 ##RIS_10_10 needs to be filtered out
