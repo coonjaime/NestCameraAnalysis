@@ -51,6 +51,10 @@ JNA_NB <- read_excel("Initial Data/JNA_Nestling Behavior_4.2.22.xlsx")
 JNA_PB <- read_excel("Initial Data/JNA_Parent Behavior_4.2.22.xlsx")
 JNA_VM <- read_excel("Initial Data/JNA_Video_Master_4.2.22.xlsx")
 
+TEC_NB <- read_excel("Initial Data/TEC_Nestling Behavior_4.2.22.xlsx")
+TEC_PB <- read_excel("Initial Data/TEC_Parent Behavior_4.2.22.xlsx")
+TEC_VM <- read_excel("Initial Data/TEC_Video_Master_4.2.22.xlsx")
+
 HKG_NB <- read_excel("Initial Data/HKG_Nestling Behavior_4.2.22.xlsx")
 HKG_PB <- read_excel("Initial Data/HKG_Parent Behavior_4.2.22.xlsx")
 HKG_VM <- read_excel("Initial Data/HKG_Video_Master_4.2.22.xlsx")
@@ -160,6 +164,49 @@ JNA_PB_cleaned=JNA_PB%>%
   add_column("CoderID"="003")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JNA_VM_cleaned,select(
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    by="NestIDSession")%>%
+  filter(!(Year<2021))
+
+#THEA
+TEC_VM_cleaned=TEC_VM%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="004")%>%
+  rename(FilmStartTime=StartTime,
+         FilmEndTime=EndTime,
+         SessionY=Session)%>%
+  mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
+  mutate("Year"=(year(Date)))%>%
+  filter(!(Year<2021))%>% 
+  rename(NumHosts = Dickcissel,
+         NumBHCO  = Cowbird)%>%
+  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
+  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
+  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
+  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
+  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
+  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
+  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
+  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
+  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
+  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
+  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
+  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+
+TEC_NB_cleaned=TEC_NB%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="004")%>%
+  unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
+  left_join(TEC_VM_cleaned,select(
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    by="NestIDSession")%>%
+  filter(!(Year<2021)) 
+
+TEC_PB_cleaned=TEC_PB%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="004")%>%
+  unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
+  left_join(TEC_VM_cleaned,select(
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021))
@@ -295,9 +342,9 @@ CER_PB_cleaned=CER_PB%>%
   
 compare_df_cols(JJC_PB_cleaned,JNA_PB_cleaned) #to compare before merging
 
-NB_combined=rbind(JJC_NB_cleaned,JNA_NB_cleaned,HKG_NB_cleaned,MFM_NB_cleaned,CER_NB_cleaned)
-PB_combined=rbind(JJC_PB_cleaned,JNA_PB_cleaned,HKG_PB_cleaned,MFM_PB_cleaned,CER_PB_cleaned)
-VM_combined=rbind(JJC_VM_cleaned,JNA_VM_cleaned,HKG_VM_cleaned,MFM_VM_cleaned,CER_VM_cleaned)
+NB_combined=rbind(JJC_NB_cleaned,JNA_NB_cleaned,TEC_NB_cleaned,HKG_NB_cleaned,MFM_NB_cleaned,CER_NB_cleaned)
+PB_combined=rbind(JJC_PB_cleaned,JNA_PB_cleaned,TEC_PB_cleaned,HKG_PB_cleaned,MFM_PB_cleaned,CER_PB_cleaned)
+VM_combined=rbind(JJC_VM_cleaned,JNA_VM_cleaned,TEC_VM_cleaned,HKG_VM_cleaned,MFM_VM_cleaned,CER_VM_cleaned)
 
 #__1d. DATA CLEANING OF WHOLE DATASET                                  ####
 ##RIS_10_10 needs to be filtered out
@@ -320,7 +367,7 @@ VM=VM_combined%>%
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   add_column("Parasitized")%>%
   mutate(Parasitized=as.logical(NumBHCO))%>%
-  #filtering out incomplete nests as of 1.2.22:
+  #filtering out incomplete nests as of 1.2.22: #recheck which nests are incomplete once all databases are ready
   filter(!grepl('235_DICK_21_21_1',NestIDSession))%>% #figure out why grepl isn't working anymore
   filter(!grepl('KLT_EAME_1_21_1', NestIDSession))%>%
   filter(!grepl('KLT_EAME_2_21_1', NestIDSession))%>%
