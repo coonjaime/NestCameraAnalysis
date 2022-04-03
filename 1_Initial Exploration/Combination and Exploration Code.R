@@ -348,6 +348,7 @@ VM_combined=rbind(JJC_VM_cleaned,JNA_VM_cleaned,TEC_VM_cleaned,HKG_VM_cleaned,MF
 
 #__1d. DATA CLEANING OF WHOLE DATASET                                  ####
 ##RIS_10_10 needs to be filtered out
+##Some duplicated need to be filtered out due to CER using old JNA dataset
 
 summary(VM$NestIDSession)
 VM=VM_combined%>%
@@ -365,9 +366,8 @@ VM=VM_combined%>%
                                '84% - 50%'="50-84"))%>%
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
-  add_column("Parasitized")%>%
-  mutate(Parasitized=as.logical(NumBHCO))%>%
-  #filtering out incomplete nests as of 1.2.22: #recheck which nests are incomplete once all databases are ready
+  add_column("Parasitized"=as.logical(.$NumBHCO))%>%
+  #filtering out incomplete nests as of 1.2.22: #recheck which nests are incomplete once all datasets are ready
   filter(!grepl('235_DICK_21_21_1',NestIDSession))%>% #figure out why grepl isn't working anymore
   filter(!grepl('KLT_EAME_1_21_1', NestIDSession))%>%
   filter(!grepl('KLT_EAME_2_21_1', NestIDSession))%>%
