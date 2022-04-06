@@ -47,13 +47,25 @@ JJC_NB <- read_excel("Initial Data/JJC_Nestling Behavior_1.2.22.xlsx")
 JJC_PB <- read_excel("Initial Data/JJC_Parent Behavior_1.2.22.xlsx")
 JJC_VM <- read_excel("Initial Data/JJC_Video_Master_1.2.22.xlsx")
 
-JNA_NB <- read_excel("Initial Data/JNA_Nestling Behavior_1.2.22.xlsx")
-JNA_PB <- read_excel("Initial Data/JNA_Parent Behavior_1.2.22.xlsx")
-JNA_VM <- read_excel("Initial Data/JNA_Video_Master_1.2.22.xlsx")
+JNA_NB <- read_excel("Initial Data/JNA_Nestling Behavior_4.2.22.xlsx")
+JNA_PB <- read_excel("Initial Data/JNA_Parent Behavior_4.2.22.xlsx")
+JNA_VM <- read_excel("Initial Data/JNA_Video_Master_4.2.22.xlsx")
+
+TEC_NB <- read_excel("Initial Data/TEC_Nestling Behavior_4.2.22.xlsx")
+TEC_PB <- read_excel("Initial Data/TEC_Parent Behavior_4.2.22.xlsx")
+TEC_VM <- read_excel("Initial Data/TEC_Video_Master_4.2.22.xlsx")
+
+HKG_NB <- read_excel("Initial Data/HKG_Nestling Behavior_4.2.22.xlsx")
+HKG_PB <- read_excel("Initial Data/HKG_Parent Behavior_4.2.22.xlsx")
+HKG_VM <- read_excel("Initial Data/HKG_Video_Master_4.2.22.xlsx")
 
 MFM_NB <- read_excel("Initial Data/MFM_Nestling Behavior_1.2.22.xlsx")
 MFM_PB <- read_excel("Initial Data/MFM_Parent Behavior_1.2.22.xlsx")
 MFM_VM <- read_excel("Initial Data/MFM_Video_Master_1.2.22.xlsx")
+
+CER_NB <- read_excel("Initial Data/CER_Nestling Behavior_4.2.22.xlsx")
+CER_PB <- read_excel("Initial Data/CER_Parent Behavior_4.2.22.xlsx")
+CER_VM <- read_excel("Initial Data/CER_Video_Master_4.2.22.xlsx")
 
 #Nestling numbers for updated nests as of 1.2.22
 NestlingNums <- read_excel("Initial Data/NestlingNums21_1.2.22.xlsx")
@@ -140,7 +152,7 @@ JNA_VM_cleaned=JNA_VM%>%
 
 JNA_NB_cleaned=JNA_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
-  add_column("CoderID"="002")%>%
+  add_column("CoderID"="003")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JNA_VM_cleaned,select(
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
@@ -149,12 +161,98 @@ JNA_NB_cleaned=JNA_NB%>%
   
 JNA_PB_cleaned=JNA_PB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
-  add_column("CoderID"="002")%>%
+  add_column("CoderID"="003")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JNA_VM_cleaned,select(
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
-  filter(!grepl('2015|2016', Year))
+  filter(!(Year<2021))
+
+#THEA
+TEC_VM_cleaned=TEC_VM%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="004")%>%
+  rename(FilmStartTime=StartTime,
+         FilmEndTime=EndTime,
+         SessionY=Session)%>%
+  mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
+  mutate("Year"=(year(Date)))%>%
+  filter(!(Year<2021))%>% 
+  rename(NumHosts = Dickcissel,
+         NumBHCO  = Cowbird)%>%
+  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
+  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
+  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
+  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
+  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
+  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
+  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
+  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
+  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
+  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
+  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
+  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+
+TEC_NB_cleaned=TEC_NB%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="004")%>%
+  unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
+  left_join(TEC_VM_cleaned,select(
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    by="NestIDSession")%>%
+  filter(!(Year<2021)) 
+
+TEC_PB_cleaned=TEC_PB%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="004")%>%
+  unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
+  left_join(TEC_VM_cleaned,select(
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    by="NestIDSession")%>%
+  filter(!(Year<2021))
+
+#HANNAH
+HKG_VM_cleaned=HKG_VM%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="005")%>%
+  rename(FilmStartTime=StartTime,
+         FilmEndTime=EndTime,
+         SessionY=Session)%>%
+  mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
+  mutate("Year"=(year(Date)))%>%
+  filter(!(Year<2021))%>% 
+  rename(NumHosts = Dickcissel,
+         NumBHCO  = Cowbird)%>%
+  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
+  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
+  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
+  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
+  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
+  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
+  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
+  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
+  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
+  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
+  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
+  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+
+HKG_NB_cleaned=HKG_NB%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="005")%>%
+  unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
+  left_join(HKG_VM_cleaned,select(
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    by="NestIDSession")%>%
+  filter(!(Year<2021)) 
+
+HKG_PB_cleaned=HKG_PB%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="005")%>%
+  unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
+  left_join(HKG_VM_cleaned,select(
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    by="NestIDSession")%>%
+  filter(!(Year<2021))
 
 #MOLLY
 MFM_VM_cleaned=MFM_VM%>%
@@ -198,15 +296,59 @@ MFM_PB_cleaned=MFM_PB%>%
     Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
+
+#Claudette
+CER_VM_cleaned=CER_VM%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="008")%>%
+  rename(FilmStartTime=StartTime,
+         FilmEndTime=EndTime,
+         SessionY=Session)%>%
+  mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
+  mutate("Year"=(year(Date)))%>%
+  filter(!(Year<2021))%>% 
+  rename(NumHosts = Dickcissel,
+         NumBHCO  = Cowbird)%>%
+  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
+  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
+  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
+  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
+  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
+  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
+  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
+  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
+  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
+  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
+  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
+  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+
+CER_NB_cleaned=CER_NB%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="008")%>%
+  unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
+  left_join(CER_VM_cleaned,select(
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
+    by="NestIDSession")%>%
+  filter(!(Year<2021)) 
+
+CER_PB_cleaned=CER_PB%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="008")%>%
+  unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
+  left_join(CER_VM_cleaned,select(
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    by="NestIDSession")%>%
+  filter(!(Year<2021)) 
   
 compare_df_cols(JJC_PB_cleaned,JNA_PB_cleaned) #to compare before merging
 
-NB_combined=rbind(JJC_NB_cleaned,JNA_NB_cleaned,MFM_NB_cleaned)
-PB_combined=rbind(JJC_PB_cleaned,JNA_PB_cleaned,MFM_PB_cleaned)
-VM_combined=rbind(JJC_VM_cleaned,JNA_VM_cleaned,MFM_VM_cleaned)
+NB_combined=rbind(JJC_NB_cleaned,JNA_NB_cleaned,TEC_NB_cleaned,HKG_NB_cleaned,MFM_NB_cleaned,CER_NB_cleaned)
+PB_combined=rbind(JJC_PB_cleaned,JNA_PB_cleaned,TEC_PB_cleaned,HKG_PB_cleaned,MFM_PB_cleaned,CER_PB_cleaned)
+VM_combined=rbind(JJC_VM_cleaned,JNA_VM_cleaned,TEC_VM_cleaned,HKG_VM_cleaned,MFM_VM_cleaned,CER_VM_cleaned)
 
 #__1d. DATA CLEANING OF WHOLE DATASET                                  ####
 ##RIS_10_10 needs to be filtered out
+##Some duplicated need to be filtered out due to CER using old JNA dataset
 
 summary(VM$NestIDSession)
 VM=VM_combined%>%
@@ -224,7 +366,8 @@ VM=VM_combined%>%
                                '84% - 50%'="50-84"))%>%
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
-  #filtering out incomplete nests as of 1.2.22:
+  add_column("Parasitized"=as.logical(.$NumBHCO))%>%
+  #filtering out incomplete nests as of 1.2.22: #recheck which nests are incomplete once all datasets are ready
   filter(!grepl('235_DICK_21_21_1',NestIDSession))%>% #figure out why grepl isn't working anymore
   filter(!grepl('KLT_EAME_1_21_1', NestIDSession))%>%
   filter(!grepl('KLT_EAME_2_21_1', NestIDSession))%>%
@@ -257,12 +400,12 @@ NB=NB_combined%>%
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   
-  #filtering out incomplete nests as of 1.2.22:       
-  
   mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
   mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  
+  #filtering out incomplete nests as of 1.2.22:  
   
   filter(!grepl(' 235_DICK_21_21_1', NestIDSession))%>%
   filter(!grepl(' KLT_EAME_1_21_1', NestIDSession))%>%
@@ -419,8 +562,9 @@ NestChecks=read_csv("Initial Data/NestChecks_2.Mar.2022.csv")%>%
   mutate(Date=format(mdy(Date),'%m/%d/%y'))%>%
   mutate(Year=year(mdy(Date)))%>%
   filter(Year>2014)%>%
-  #To do: recode Fledge as Fledged, Cowbird fledge as Cowbird fledged
-  filter(grepl('Nestling|Fledged|Abandoned|Dead|Cowbird fledged|Cowbird fledge|Fledge', Stage))%>% 
+  mutate(Stage = replace(Stage, Stage=="Fledge", "Fledged"))%>%
+  mutate(Stage = replace(Stage, Stage=="Cowbird fledge", "Cowbird fledged"))%>%
+  filter(grepl('Nestling|Fledged|Abandoned|Dead|Cowbird fledged', Stage))%>% 
   group_by(NestID)%>%
   mutate(MaxBHCO=max(ParasiteChicks),
          MaxHost=max(HostChicks),
@@ -440,3 +584,19 @@ summary(Model1)
 
 
 names(NestChecks)
+
+#_____________________________________________________####
+####4. Descriptive Data ####
+
+#Dipping percentages
+DipPercent_bySpecies <- ggplot(PB_dips_bySpecies,aes(x=Species,y=mean))+
+  geom_col(aes(color="black",fill=Species))+
+  scale_x_discrete(labels=c("Dickcissel","Grasshopper Sparrow","Red-winged Blackbird"))+
+  scale_fill_manual(values=c("goldenrod1","peru","red3"))+
+  scale_color_manual(values = "black")+
+  scale_y_continuous(limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
+  labs(y="Percent of Provisioning Events with Dipping",x="")+
+  theme_minimal()+
+  theme(legend.position = "none")
+DipPercent_bySpecies
+
