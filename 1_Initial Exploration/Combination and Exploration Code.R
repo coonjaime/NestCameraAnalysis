@@ -34,10 +34,11 @@ packages('tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate')
 
 #__1b. IMPORTING SEPARATE DATASETS                     ####
 
-veg<-read_csv("Initial Data/NestVeg_2.Mar.2022.csv")%>%
+veg<-read_csv("Initial Data/NestVeg_2.Mar.2022.csv")%>%  #Check about NAs in dataset
   clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   filter(Year>2014)%>%
+  filter(!(NestID=="RIS_10_10"))%>%
   group_by(NestID)%>%
   mutate(LitDepth=(Litdepth+Litdepth2+Litdepth3)/3)%>%
   mutate(Robel=(Robel1+Robel2+Robel3+Robel4)/4)%>%
@@ -75,7 +76,7 @@ CER_NB <- read_excel("Initial Data/CER_Nestling Behavior_4.2.22.xlsx")
 CER_PB <- read_excel("Initial Data/CER_Parent Behavior_4.2.22.xlsx")
 CER_VM <- read_excel("Initial Data/CER_Video_Master_4.2.22.xlsx")
 
-#Nestling numbers for updated nests as of 1.2.22
+#Nestling numbers for updated nests as of 1.2.22 #These need to be updated
 NestlingNums <- read_excel("Initial Data/NestlingNums21_1.2.22.xlsx")
 
 
@@ -97,6 +98,8 @@ WPT_VM_cleaned=WPT_VM%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
   filter(!(Year<2021))%>% 
+  mutate(Species=recode(Species,"RIE"="DICK"))%>% #fixing WPT mistype
+  mutate(WhoIsScoring=recode(WhoIsScoring,"Wendy"="WPT"))%>% #fixing WPT mistype
   rename(NumHosts = Dickcissel,
          NumBHCO  = Cowbird)%>%
   left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
@@ -140,6 +143,7 @@ JJC_VM_cleaned=JJC_VM%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
   filter(!(Year==2016))%>%
+  filter(!(Year==2017))%>% #One 2016 nest coded as 2017
   filter(!grepl('KLT RWBL 4 21 (1)', NestIDSession))%>% #duplicate 
   rename(NumHosts = Dickcissel,
          NumBHCO  = Cowbird)%>%
@@ -391,7 +395,7 @@ MFM_PB_cleaned=MFM_PB%>%
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
 
-#Claudette
+#CLAUDETTE    #Is there data we need from CER's old access file?
 CER_VM_cleaned=CER_VM%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
   add_column("CoderID"="008")%>%
@@ -400,7 +404,8 @@ CER_VM_cleaned=CER_VM%>%
          SessionY=Session)%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
-  filter(!(Year<2021))%>% 
+  filter(!(Year<2021))%>%
+  filter(!grepl("JNA",WhoIsScoring))%>%
   rename(NumHosts = Dickcissel,
          NumBHCO  = Cowbird)%>%
   left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
@@ -441,10 +446,7 @@ PB_combined=rbind(WPT_PB_cleaned,JJC_PB_cleaned,JNA_PB_cleaned,TEC_PB_cleaned,HK
 VM_combined=rbind(WPT_VM_cleaned,JJC_VM_cleaned,JNA_VM_cleaned,TEC_VM_cleaned,HKG_VM_cleaned,ESK_VM_cleaned,MFM_VM_cleaned,CER_VM_cleaned)
 
 #__1d. DATA CLEANING OF WHOLE DATASET                                  ####
-##RIS_10_10 needs to be filtered out
-##Some duplicated need to be filtered out due to CER using old JNA dataset
 
-summary(VM$NestIDSession)
 VM=VM_combined%>%
   filter(!grepl('PTER', NestIDSession))%>%
   filter(!grepl('EJT', NestID))%>%
@@ -461,15 +463,19 @@ VM=VM_combined%>%
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   add_column("Parasitized"=as.logical(.$NumBHCO))%>%
-  #filtering out incomplete nests as of 1.2.22: #recheck which nests are incomplete once all datasets are ready
-  filter(!grepl('235_DICK_21_21_1',NestIDSession))%>% #figure out why grepl isn't working anymore
-  filter(!grepl('KLT_EAME_1_21_1', NestIDSession))%>%
-  filter(!grepl('KLT_EAME_2_21_1', NestIDSession))%>%
-  filter(!grepl('235_GRSP_2_21_1', NestIDSession))%>%
-  filter(!grepl('KLT_RWBL_6_21_1', NestIDSession))%>%
-  filter(!grepl('RIE_RWBL_11_21_2', NestIDSession))%>%
-  filter(!grepl('KLT_RWBL_23_21_1', NestIDSession))%>%
-  filter(!grepl('RIE_RWBL_26_21_1', NestIDSession))%>%
+  
+  #filtering out incomplete nests as of 4.9.22: #recheck which nests are incomplete once all datasets are ready
+  filter(!(NestIDSession=='235_DICK_21_21_1'))%>% 
+  filter(!(NestIDSession=='KLT_EAME_1_21_1'))%>%
+  filter(!(NestIDSession=='KLT_EAME_2_21_1'))%>%
+  filter(!(NestIDSession=='235_GRSP_2_21_1'))%>%
+  filter(!(NestIDSession=='RIE_RWBL_11_21_2'))%>%
+  filter(!(NestIDSession=='KLT_RWBL_23_21_1'))%>% #Filming session not in spreadsheet
+  filter(!(NestIDSession=='RIE_RWBL_7_21_2'))%>%
+  filter(!(NestIDSession=='RIE_GRCA_1_21_1'))%>%
+  filter(!(NestIDSession=='RIE_BRTH_2_21_2'))%>% #Marked as done, but only dipping check?
+  #235 EAKI 1 21 not started on spreadsheet. Is it done?
+  
   mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M:%S'))%>%
   mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M:%S')) %>%
   mutate(FilmEnd=(hour(hms(FilmEndTime)))+(minute(hms(FilmEndTime))/60))%>%
@@ -499,16 +505,18 @@ NB=NB_combined%>%
   mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   
-  #filtering out incomplete nests as of 1.2.22:  
+  #filtering out incomplete nests as of 4.9.22:  
   
-  filter(!grepl(' 235_DICK_21_21_1', NestIDSession))%>%
-  filter(!grepl(' KLT_EAME_1_21_1', NestIDSession))%>%
-  filter(!grepl(' KLT_EAME_2_21_1', NestIDSession))%>%
-  filter(!grepl(' 235_GRSP_2_21_1', NestIDSession))%>%
-  filter(!grepl(' KLT_RWBL_6_21_1', NestIDSession))%>%
-  filter(!grepl(' RIE_RWBL_11_21_2', NestIDSession))%>%
-  filter(!grepl(' KLT_RWBL_23_21_1', NestIDSession))%>%
-  filter(!grepl(' RIE_RWBL_26_21_1', NestIDSession))%>%
+  filter(!(NestIDSession=='235_DICK_21_21_1'))%>% 
+  filter(!(NestIDSession=='KLT_EAME_1_21_1'))%>%
+  filter(!(NestIDSession=='KLT_EAME_2_21_1'))%>%
+  filter(!(NestIDSession=='235_GRSP_2_21_1'))%>%
+  filter(!(NestIDSession=='RIE_RWBL_11_21_2'))%>%
+  filter(!(NestIDSession=='KLT_RWBL_23_21_1'))%>% #Filming session not in spreadsheet
+  filter(!(NestIDSession=='RIE_RWBL_7_21_2'))%>%
+  filter(!(NestIDSession=='RIE_GRCA_1_21_1'))%>%
+  filter(!(NestIDSession=='RIE_BRTH_2_21_2'))%>% #Marked as done, but only dipping check?
+  #235 EAKI 1 21 not started on spreadsheet. Is it done?
   
   mutate(NestVisability=recode(NestVisability, 
                                '100% - 85%'="85-100",
@@ -536,15 +544,18 @@ PB=PB_combined%>%
   mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   
-  #filtering out incomplete nests as of 1.2.22:       
-  filter(!grepl(' 235_DICK_21_21_1', NestIDSession))%>%
-  filter(!grepl(' KLT_EAME_1_21_1', NestIDSession))%>%
-  filter(!grepl(' KLT_EAME_2_21_1', NestIDSession))%>%
-  filter(!grepl(' 235_GRSP_2_21_1', NestIDSession))%>%
-  filter(!grepl(' KLT_RWBL_6_21_1', NestIDSession))%>%
-  filter(!grepl(' RIE_RWBL_11_21_2', NestIDSession))%>%
-  filter(!grepl(' KLT_RWBL_23_21_1', NestIDSession))%>%
-  filter(!grepl(' RIE_RWBL_26_21_1', NestIDSession))%>%
+  #filtering out incomplete nests as of 4.9.22:  
+  
+  filter(!(NestIDSession=='235_DICK_21_21_1'))%>% 
+  filter(!(NestIDSession=='KLT_EAME_1_21_1'))%>%
+  filter(!(NestIDSession=='KLT_EAME_2_21_1'))%>%
+  filter(!(NestIDSession=='235_GRSP_2_21_1'))%>%
+  filter(!(NestIDSession=='RIE_RWBL_11_21_2'))%>%
+  filter(!(NestIDSession=='KLT_RWBL_23_21_1'))%>% #Filming session not in spreadsheet
+  filter(!(NestIDSession=='RIE_RWBL_7_21_2'))%>%
+  filter(!(NestIDSession=='RIE_GRCA_1_21_1'))%>%
+  filter(!(NestIDSession=='RIE_BRTH_2_21_2'))%>% #Marked as done, but only dipping check?
+  #235 EAKI 1 21 not started on spreadsheet. Is it done?
   
   mutate(NestVisability=recode(NestVisability, 
                                '100% - 85%'="85-100",
@@ -631,10 +642,10 @@ summary(Model1)
 BegData=NB%>%
   left_join(VM,select(NumHosts,NumBHCO,TotalNestling,OrdDate),by="NestID")%>%
   filter(BehaviorCode=="Begging")%>%
-  group_by(NestID,BehaviorCode,NestIDSession.y,TotalNestling.y,NumBHCO.y,NumHosts.y)%>%
+  group_by(NestID,BehaviorCode,NestIDSession.y,TotalNestling.y,NumBHCO.y,NumHosts.y,NestlingAgeDays.y)%>%
   summarize(BegDuration = sum(Duration_Sec))%>%
   mutate(PercentTime=BegDuration/(20*60))%>%
- filter(TotalNestling.y>0)
+  filter(TotalNestling.y>0)
 
 
 PercentTime=glmmTMB(PercentTime~NumBHCO.y+NumHosts.y+NestlingAgeDays.y+(1|NestIDSession.y),family="tweedie",data=BegData)
@@ -683,14 +694,14 @@ names(NestChecks)
 ####4. Descriptive Data ####
 
 #Dipping percentages
-DipPercent_bySpecies <- ggplot(PB_dips_bySpecies,aes(x=Species,y=mean))+
+DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=Species,y=mean))+
   geom_col(aes(color="black",fill=Species))+
-  scale_x_discrete(labels=c("Dickcissel","Grasshopper Sparrow","Red-winged Blackbird"))+
-  scale_fill_manual(values=c("goldenrod1","peru","red3"))+
+  #scale_x_discrete(labels=c("Bobolink","Common Grackle","Dickcissel","Grasshopper Sparrow","Red-winged Blackbird"))+
+  #scale_fill_manual(values=c("burlywood1","purple4","goldenrod1","peru","red3"))+
   scale_color_manual(values = "black")+
   scale_y_continuous(limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
   labs(y="Percent of Provisioning Events with Dipping",x="")+
   theme_minimal()+
   theme(legend.position = "none")
-DipPercent_bySpecies
+DipPercent_bySpecies #Should we only include species with >1 session? >2?
 
