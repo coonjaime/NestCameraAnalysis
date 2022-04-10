@@ -45,7 +45,7 @@ veg<-read_csv("Initial Data/NestVeg_2.Mar.2022.csv")%>%  #Check about NAs in dat
   summarize_at(vars(Fear, Csg, Wsg, Forb,Legume,Covlit,Robel,LitDepth),mean)
 
 WPT_NB <- read_excel("Initial Data/WPT_Nestling Behavior_4.9.22.xlsx")
-WPT_PB <- read_excel("Initial Data/WPT_Parent Behavior_4.9.22.xlsx")
+WPT_PB <- read_excel("Initial Data/WPT_Parent Behavior_4.9.22.xlsx") #Dips, Session, Fed need to be not logicals
 WPT_VM <- read_excel("Initial Data/WPT_Video_Master_4.9.22.xlsx")
 
 JJC_NB <- read_excel("Initial Data/JJC_Nestling Behavior_4.9.22.xlsx")
@@ -465,16 +465,11 @@ VM=VM_combined%>%
   add_column("Parasitized"=as.logical(.$NumBHCO))%>%
   
   #filtering out incomplete nests as of 4.9.22: #recheck which nests are incomplete once all datasets are ready
-  filter(!(NestIDSession=='235_DICK_21_21_1'))%>% 
-  filter(!(NestIDSession=='KLT_EAME_1_21_1'))%>%
+  filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
   filter(!(NestIDSession=='KLT_EAME_2_21_1'))%>%
   filter(!(NestIDSession=='235_GRSP_2_21_1'))%>%
   filter(!(NestIDSession=='RIE_RWBL_11_21_2'))%>%
-  filter(!(NestIDSession=='KLT_RWBL_23_21_1'))%>% #Filming session not in spreadsheet
   filter(!(NestIDSession=='RIE_RWBL_7_21_2'))%>%
-  filter(!(NestIDSession=='RIE_GRCA_1_21_1'))%>%
-  filter(!(NestIDSession=='RIE_BRTH_2_21_2'))%>% #Marked as done, but only dipping check?
-  #235 EAKI 1 21 not started on spreadsheet. Is it done?
   
   mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M:%S'))%>%
   mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M:%S')) %>%
@@ -507,16 +502,11 @@ NB=NB_combined%>%
   
   #filtering out incomplete nests as of 4.9.22:  
   
-  filter(!(NestIDSession=='235_DICK_21_21_1'))%>% 
-  filter(!(NestIDSession=='KLT_EAME_1_21_1'))%>%
+  filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
   filter(!(NestIDSession=='KLT_EAME_2_21_1'))%>%
   filter(!(NestIDSession=='235_GRSP_2_21_1'))%>%
   filter(!(NestIDSession=='RIE_RWBL_11_21_2'))%>%
-  filter(!(NestIDSession=='KLT_RWBL_23_21_1'))%>% #Filming session not in spreadsheet
   filter(!(NestIDSession=='RIE_RWBL_7_21_2'))%>%
-  filter(!(NestIDSession=='RIE_GRCA_1_21_1'))%>%
-  filter(!(NestIDSession=='RIE_BRTH_2_21_2'))%>% #Marked as done, but only dipping check?
-  #235 EAKI 1 21 not started on spreadsheet. Is it done?
   
   mutate(NestVisability=recode(NestVisability, 
                                '100% - 85%'="85-100",
@@ -546,16 +536,11 @@ PB=PB_combined%>%
   
   #filtering out incomplete nests as of 4.9.22:  
   
-  filter(!(NestIDSession=='235_DICK_21_21_1'))%>% 
-  filter(!(NestIDSession=='KLT_EAME_1_21_1'))%>%
+  filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
   filter(!(NestIDSession=='KLT_EAME_2_21_1'))%>%
   filter(!(NestIDSession=='235_GRSP_2_21_1'))%>%
   filter(!(NestIDSession=='RIE_RWBL_11_21_2'))%>%
-  filter(!(NestIDSession=='KLT_RWBL_23_21_1'))%>% #Filming session not in spreadsheet
   filter(!(NestIDSession=='RIE_RWBL_7_21_2'))%>%
-  filter(!(NestIDSession=='RIE_GRCA_1_21_1'))%>%
-  filter(!(NestIDSession=='RIE_BRTH_2_21_2'))%>% #Marked as done, but only dipping check?
-  #235 EAKI 1 21 not started on spreadsheet. Is it done?
   
   mutate(NestVisability=recode(NestVisability, 
                                '100% - 85%'="85-100",
@@ -696,12 +681,12 @@ names(NestChecks)
 #Dipping percentages
 DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=Species,y=mean))+
   geom_col(aes(color="black",fill=Species))+
-  #scale_x_discrete(labels=c("Bobolink","Common Grackle","Dickcissel","Grasshopper Sparrow","Red-winged Blackbird"))+
-  #scale_fill_manual(values=c("burlywood1","purple4","goldenrod1","peru","red3"))+
+  scale_x_discrete(labels=c("Bobolink","Brown\nThrasher","Common\nGrackle","Dickcissel","Eastern\nMeadowlark","Gray\nCatbird","Grasshopper\nSparrow","Red-winged\nBlackbird"))+
+  scale_fill_manual(values=c("burlywood1","sienna2","mediumorchid4","goldenrod1","yellow2","gray50","peru","red3"))+
   scale_color_manual(values = "black")+
   scale_y_continuous(limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
   labs(y="Percent of Provisioning Events with Dipping",x="")+
   theme_minimal()+
   theme(legend.position = "none")
-DipPercent_bySpecies #Should we only include species with >1 session? >2?
+DipPercent_bySpecies #Include n= for each species
 
