@@ -24,6 +24,12 @@
 #setwd("~/NestCameraAnalysis/1_Initial Exploration")
 #feel free to add your own setup if using this code
 
+#Ethan wd
+setwd("~/Desktop/GRGCoding")
+
+#Josh
+setwd("~/RStudio/NestCameraAnalysis/1_Initial Exploration")
+
 #RStudio Cloud setup
 setwd("/cloud/project/1_Initial Exploration")
 #__1a. PACKAGES                                       ####
