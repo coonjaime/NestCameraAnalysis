@@ -555,7 +555,19 @@ PB=PB_combined%>%
   mutate(BehaviorStart=ClipStart+(StartMinute/60))%>%
   filter(FilmDuration > .5)%>%
   mutate(OrdDate=yday(Date))%>%
-  mutate_at(vars(Species), ~replace_na(., 'DICK'))
+  mutate_at(vars(Species), ~replace_na(., 'DICK'))%>%
+  
+  #Based on avg female DICK beak length of 16.1mm (Birds of the World)
+  mutate(Arthmm = case_when(Species=="DICK" & ArthSize=="Small" ~ 9.05,
+                            Species=="DICK" & ArthSize=="Medium" ~ 24.15,
+                            Species=="DICK" & ArthSize=="Large" ~ 41.1,
+                            
+  #Based on avg female RWBL beak length of 19.3mm (Birds of the World)
+  #Check RWBL subspecies and measurements. Pyle has 19.3 at top of range
+                            Species=="RWBL" & ArthSize=="Small" ~ 10.65,
+                            Species=="RWBL" & ArthSize=="Medium" ~ 28.95,
+                            Species=="RWBL" & ArthSize=="Large" ~ 44.1,
+                            TRUE ~ NA_real_))
 
 #_____________________________________________________####
 ####2. Calculate Durations and Rates ####
