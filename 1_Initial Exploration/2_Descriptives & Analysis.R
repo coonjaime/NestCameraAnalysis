@@ -276,6 +276,22 @@ DipsPerChick_BHCOPres=glmmTMB(DippingPresent ~ Parasitized + (1|NestID),family="
 summary(DipsPerChick_BHCOPres)
 
 
+#producing predicted values
+TotNests_Pred = as.data.frame(ggpredict(TotNestsFinal,c("HerbTreat", "GrazingYesNo"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
+colnames(TotNests_Pred)=c("HerbTreat", "Predicted","SE","Lower","Upper", "Grazing") #renames columns
+print(TotNests_Pred) 
+
+#plot
+TotNests_Plot=ggplot(data=TotNests_Pred, y=Predicted, x=Grazing)+  
+  geom_bar(aes(x=Grazing, y=Predicted,fill=HerbTreat), position=dodge, stat="identity")+
+  scale_fill_manual(values=c("goldenrod3","darkseagreen4","darkslategray"))+
+  scale_x_discrete(labels=c("Ungrazed","Grazed"))+
+  scale_y_continuous(limits=c(0,40),expand = c(0, 0)) +
+  geom_errorbar(aes(x = Grazing, ymin = Lower, ymax = Upper, group=HerbTreat),position = dodge, width = 0.2)+
+  labs(y = "Total Nests per Patch", x=" ")+
+  theme_bar_leg()+
+  theme(legend.title=element_blank())
+TotNests_Plot
 
 #_____________________________________________________####
 ####8. Prelim analysis for ESA ####
