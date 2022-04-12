@@ -28,7 +28,6 @@
 #Ethan wd
 setwd("~/Desktop/GRGCoding/NestCameraAnalysis/1_Initial Exploration")
 remove.packages('glmmTMB')
-remove.packages('dplyr')
 install.packages('glmmTMB')
 
 #Josh
@@ -272,9 +271,21 @@ summary(DipsPresent_Arthmm)
       #DipsSumPerChick =  NumBHCO  + (1|NestID)
       #DipsSumPerChick = Parasitized + (1|NestID)
 
-DipsPerChick_BHCOPres=glmmTMB(DippingPresent ~ Parasitized + (1|NestID),family="binomial", data=PB_Dips)
-summary(DipsPerChick_BHCOPres)
+#DippingPresent = NumBHCO   + (1|NestID) (family would need to be binomial)
+DipsPresent_BHCONum=glmmTMB(DippingPresent ~ NumBHCO + (1|NestID),family="binomial", data=PB_Dips)
+summary(DipsPresent_BHCONum)
 
+#DippingPresent = Parasitized + (1|NestID)
+DipsPresent_Parasite=glmmTMB(DippingPresent ~ Parasitized + (1|NestID),family="binomial", data=PB_Dips)
+summary(DipsPresent_Parasite)
+
+#DipsSumPerChick =  NumBHCO  + (1|NestID)
+DipsPerChick_BHCONum=glmmTMB(DippingPresent ~ NumBHCO + (1|NestID),family="gaussian", data=PB_Dips)
+summary(DipsPerChick_BHCONum)
+
+#DipsSumPerChick = Parasitized + (1|NestID)
+DipsPerChick_Parasite=glmmTMB(DippingPresent ~ Parasitized + (1|NestID),family="gaussian", data=PB_Dips)
+summary(DipsPerChick_Parasite)
 
 #producing predicted values
 TotNests_Pred = as.data.frame(ggpredict(TotNestsFinal,c("HerbTreat", "GrazingYesNo"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
