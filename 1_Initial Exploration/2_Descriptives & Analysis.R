@@ -37,22 +37,42 @@ setwd("/cloud/project/1_Initial Exploration")
 #Jaime comp wd
 setwd("~/Dropbox/_Manuscripts/Dipping/NestCameraAnalysis/1_Initial Exploration")
 
+#ggplot themes----
+theme_bar_noleg <- function () { 
+  theme(text=element_text(size=14),
+        axis.title=element_text(face="bold", size=16),
+        axis.text=element_text(size=14,color="black"),
+        axis.line=element_line(color="black",size=1),
+        panel.background=element_rect("snow2"),
+        panel.grid=element_blank(),
+        legend.position="none")}
+
+theme_bar_leg <- function () { 
+  theme(text=element_text(size=14),
+        axis.title=element_text(face="bold", size=16),
+        axis.text=element_text(size=14,color="black"),
+        axis.line=element_line(color="black",size=1),
+        panel.background=element_rect("snow2"),
+        legend.position="right",
+        legend.text=element_text(size=10, color="black"))}
+
+#_____________________________________________________####
+
 ####2. PACKAGES                                       ####
 #install.packages('easypackages')#do once to manage packages
 library('easypackages')#load package managing package
 
-packages('tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate')
-
+packages('TMB','tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate')
 
 #_____________________________________________________####
-####2. DATA  ####
+####3. DATA  ####
 
 load("VM.RData")
 load("PB.RData")
 load("NB.RData")
 
 #_____________________________________________________####
-####3. Descriptive Data ####
+####4. Descriptive Data ####
 
 
 #Parent behavior rates
@@ -99,8 +119,49 @@ PB_dips_bySpecies=PB%>%
     nSessions=n(),
     mean=mean(PercentDips))
 
+
 #_____________________________________________________####
-####3. Prelim analysis ####
+####4. Descriptive Data ####
+
+#Dipping percentages
+DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=Species,y=mean))+
+  geom_col(aes(color="black",fill=Species))+
+  scale_x_discrete(labels=c("Bobolink","Brown\nThrasher","Common\nGrackle","Dickcissel","Eastern\nMeadowlark","Gray\nCatbird","Grasshopper\nSparrow","Red-winged\nBlackbird"))+
+  scale_fill_manual(values=c("burlywood1","sienna2","mediumorchid4","goldenrod1","yellow2","gray50","peru","red3"))+
+  scale_color_manual(values = "black")+
+  scale_y_continuous(expand=c(0,0),limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
+  labs(y="% Provisioning with Dipping",x="")+
+  theme_bar_noleg()+
+  theme(legend.position = "none")
+DipPercent_bySpecies #Include n= for each species
+
+ggsave(DipPercent_bySpecies,filename="DipPercent_by_Species.png",dpi=600,units="in",height=5,width=8)
+#_____________________________________________________####
+####5. Analysis for Epic Expo ####
+
+#CalculatingDipsPerChickPerProv
+
+PB_Dips=PB%>%
+  filter(BehaviorCode=="Provisioning")%>%
+  group_by(NestIDSession)%>%
+  
+
+#Hyp1####
+
+
+
+#Hyp2####
+
+
+#Hyp3####
+
+
+#Hyp4####
+
+
+
+#_____________________________________________________####
+####8. Prelim analysis for ESA ####
 
 #Provisioning and tall fescue
 
@@ -168,19 +229,3 @@ summary(Model1)
 
 
 names(NestChecks)
-
-#_____________________________________________________####
-####4. Descriptive Data ####
-
-#Dipping percentages
-DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=Species,y=mean))+
-  geom_col(aes(color="black",fill=Species))+
-  scale_x_discrete(labels=c("Bobolink","Brown\nThrasher","Common\nGrackle","Dickcissel","Eastern\nMeadowlark","Gray\nCatbird","Grasshopper\nSparrow","Red-winged\nBlackbird"))+
-  scale_fill_manual(values=c("burlywood1","sienna2","mediumorchid4","goldenrod1","yellow2","gray50","peru","red3"))+
-  scale_color_manual(values = "black")+
-  scale_y_continuous(limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
-  labs(y="Percent of Provisioning Events with Dipping",x="")+
-  theme_minimal()+
-  theme(legend.position = "none")
-DipPercent_bySpecies #Include n= for each species
-

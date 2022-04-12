@@ -52,7 +52,7 @@ veg<-read_csv("Initial Data/NestVeg_2.Mar.2022.csv")%>%  #Check about NAs in dat
   summarize_at(vars(Fear, Csg, Wsg, Forb,Legume,Covlit,Robel,LitDepth),mean)
 
 WPT_NB <- read_excel("Initial Data/WPT_Nestling Behavior_4.9.22.xlsx")
-WPT_PB <- read_excel("Initial Data/WPT_Parent Behavior_4.9.22.xlsx") #Dips, Session, Fed need to be not logicals
+WPT_PB <- read_excel("Initial Data/WPT_Parent Behavior_4.9.22.xlsx") 
 WPT_VM <- read_excel("Initial Data/WPT_Video_Master_4.9.22.xlsx")
 
 JJC_NB <- read_excel("Initial Data/JJC_Nestling Behavior_4.9.22.xlsx")
@@ -574,8 +574,9 @@ PB=PB_combined%>%
                             Species=="RWBL" & ArthSize=="Small" ~ 10.65,
                             Species=="RWBL" & ArthSize=="Medium" ~ 28.95,
                             Species=="RWBL" & ArthSize=="Large" ~ 44.1,
-                            TRUE ~ NA_real_))
-
+                            TRUE ~ NA_real_))%>%
+  mutate_at(c(23:58), as.numeric)
+  
 save(VM,file="VM.RData")
 save(PB,file="PB.RData")
 save(NB,file="NB.RData")
