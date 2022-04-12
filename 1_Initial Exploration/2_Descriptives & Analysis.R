@@ -62,7 +62,7 @@ theme_bar_leg <- function () {
 #install.packages('easypackages')#do once to manage packages
 library('easypackages')#load package managing package
 
-packages('TMB','tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate')
+packages('TMB','tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
 
 #_____________________________________________________####
 ####3. DATA  ####
@@ -136,30 +136,97 @@ DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=S
 DipPercent_bySpecies #Include n= for each species
 
 ggsave(DipPercent_bySpecies,filename="DipPercent_by_Species.png",dpi=600,units="in",height=5,width=8)
-#_____________________________________________________####
-####5. Analysis for Epic Expo ####
 
-#CalculatingDipsPerChickPerProv
-
-PB_Dips=PB%>%
+#gift for Josh -I think this could be used to create your boxplot!
+PB_Dips_Descr=PB%>%
   filter(BehaviorCode=="Provisioning")%>%
+  filter(Species=="DICK"|Species=="RWBL")%>%
   group_by(NestIDSession)%>%
+  mutate(DipsSum = rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,
+                                 BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T))%>%
+  mutate(DipsSumPerChick = rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,
+                                         BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T)/TotalNestling)%>%
+  mutate(SessionsSum = rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,
+                                     BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T))%>%
+  mutate(SessionsSumPerChick = rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,
+                                             BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T)/TotalNestling)
+
+
+#Ethan _____________________________________________________####
+####5. Analysis for Epic Expo - DICK ####
+
+#Calculating Dips Per Chick Per Prov
+
+#Note: I think dips per chick probably makes the most sense? open to other thoughts. 
+
+#Hyp1 - satiation ####
+
+## Make it long
+Dips_By_Chick=PB%>%
+  filter(BehaviorCode=="Provisioning")%>%
+  filter(Species=="DICK")%>%
+  filter(AbleSeeDipping=TRUE)%>%
+  select(c(NestIDSession,BehaviorStart,BehaviorID,HostDipsA:BHCODipsF))%>%
+  melt(id.vars = c("NestIDSession", "BehaviorID","BehaviorStart"))%>%
+  mutate(Chick_Letter=str_sub(variable, start= -1))%>%
+  mutate(Chick_Sp=str_sub(variable,-9,-6))%>%
+  unite("Chick_ID",c("NestIDSession","Chick_Sp","Chick_Letter"), sep= "_",remove = FALSE)%>%
+  select(Chick_ID,NestIDSession,BehaviorID,value,Chick_Sp)%>%
+  rename("NumDips"="value")
+
+Fed_By_Chick=PB%>%
+  filter(BehaviorCode=="Provisioning")%>%
+  filter(Species=="DICK")%>%
+  filter(AbleSeeDipping=TRUE)%>%
+  select(c(NestIDSession,BehaviorID,HostFedA:BHCOFedF,
+           ArthID,ArthSize,Arthmm,BehaviorStart,
+           NestlingAgeDays.y,Parasitized,TotalNestling,NumBHCO,NumHosts))%>%
+  melt(id.vars = c("NestIDSession", "BehaviorID","BehaviorStart",
+                   "ArthID","ArthSize","Arthmm",
+                   "NestlingAgeDays.y","Parasitized","TotalNestling","NumBHCO",'NumHosts'))%>%
+  mutate(Chick_Letter=str_sub(variable, start= -1))%>%
+  mutate(Chick_Sp=str_sub(variable,-8,-5))%>%
+  unite("Chick_ID",c("NestIDSession","Chick_Sp","Chick_Letter"), sep= "_",remove = FALSE)%>%
+  select(Chick_ID,BehaviorStart,value,ArthSize,
+         Arthmm,BehaviorStart,NestlingAgeDays.y,Parasitized,TotalNestling,NumBHCO,NumHosts)%>%
+  rename("Fed"="value",
+         "NestlingAgeDays"="NestlingAgeDays.y")
+
+ChickData=Dips_ByChick%>%
+  left_join(Fed_By_Chick,by="Chick_ID",na.rm=TRUE)
   
   
-  #nestling nums
+  for (val in ChickData) {
+    if(val %% "Fed" == 0)  time_since_fed = count+1
+  }
   
 
-#Hyp1####
 
 
+#Hyp2 - arthropod size ####
+    #DipsSumPerChick =  ArthID  + (1|NestID)
+    #DipsSumPerChick = ArthSize + (1|NestID)
+    #DipsSumPerChick = Arthmm   + (1|NestID)
+    #DippingPresent =  ArthID  + (1|NestID)
+    #DippingPresent = ArthSize + (1|NestID)
+    #DippingPresent = Arthmm   + (1|NestID)
 
-#Hyp2####
+PB_Dips_Arth=PB_Dips%>%
+  filter(!(ArthSize=="Unknown"))
+
+DipsPerChick_ArthSize=glmmTMB(DipsSumPerChick ~ ArthSize + (1|NestID),family="gaussian",data=PB_Dips_Arth)
+summary(DipsPerChick_ArthSize)
 
 
-#Hyp3####
+#Hyp3 - cowbird presence####
 
+      #DippingPresent = NumBHCO   + (1|NestID) (family would need to be binomial)
+      #DippingPresent = Parasitized + (1|NestID)
+      #DipsSumPerChick =  NumBHCO  + (1|NestID)
+      #DipsSumPerChick = Parasitized + (1|NestID)
 
-#Hyp4####
+DipsPerChick_BHCOPres=glmmTMB(DippingPresent ~ Parasitized + (1|NestID),family="binomial", data=PB_Dips)
+summary(DipsPerChick_BHCOPres)
 
 
 
