@@ -26,7 +26,10 @@
 #feel free to add your own setup if using this code
 
 #Ethan wd
-setwd("~/Desktop/GRGCoding")
+setwd("~/Desktop/GRGCoding/NestCameraAnalysis/1_Initial Exploration")
+remove.packages('glmmTMB')
+remove.packages('dplyr')
+install.packages('glmmTMB')
 
 #Josh
 setwd("~/RStudio/NestCameraAnalysis/1_Initial Exploration")
@@ -211,11 +214,55 @@ ChickData=Dips_ByChick%>%
     #DippingPresent = ArthSize + (1|NestID)
     #DippingPresent = Arthmm   + (1|NestID)
 
-PB_Dips_Arth=PB_Dips%>%
+PB_Dips=PB%>%
+  filter(BehaviorCode=="Provisioning")%>%
+  filter(Species=="DICK")%>%
+  group_by(NestIDSession)%>%
+  mutate(DipsSum = rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,
+                                 BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T))%>%
+  mutate(DipsSumPerChick = rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,
+                                         BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T)/TotalNestling)%>%
+  mutate(SessionsSum = rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,
+                                     BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T))%>%
+  mutate(SessionsSumPerChick = rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,
+                                             BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T)/TotalNestling)
+
+
+
+PB_Dips_ArthSize=PB_Dips%>%
   filter(!(ArthSize=="Unknown"))
 
-DipsPerChick_ArthSize=glmmTMB(DipsSumPerChick ~ ArthSize + (1|NestID),family="gaussian",data=PB_Dips_Arth)
+PB_Dips_ArthID=PB_Dips%>%
+  filter(!(ArthID=="Unknown"))
+
+#template
+DipsPerChick_ArthSize=glmmTMB(DipsSumPerChick ~ ArthSize + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
 summary(DipsPerChick_ArthSize)
+DipsPerChick_ArthSize
+
+#DipsSumPerChick =  ArthID  + (1|NestID)
+DipsPerChick_ArthID=glmmTMB(DipsSumPerChick ~ ArthID + (1|NestID),family="gaussian",data=PB_Dips_ArthID)
+summary(DipsPerChick_ArthID)
+
+#DipsSumPerChick = ArthSize + (1|NestID)
+DipsPerChick_ArthSize=glmmTMB(DipsSumPerChick ~ ArthSize + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
+summary(DipsPerChick_ArthSize)
+
+#DipsSumPerChick = Arthmm   + (1|NestID)
+DipsPerChick_Arthmm=glmmTMB(DipsSumPerChick ~ Arthmm + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
+summary(DipsPerChick_Arthmm)
+
+#DippingPresent =  ArthID  + (1|NestID)
+DipsPresent_ArthID=glmmTMB(DippingPresent ~ ArthID + (1|NestID),family="binomial",data=PB_Dips_ArthID)
+summary(DipsPresent_ArthID)
+
+#DippingPresent = ArthSize + (1|NestID)
+DipsPresent_ArthSize=glmmTMB(DippingPresent ~ ArthSize + (1|NestID),family="binomial",data=PB_Dips_ArthSize)
+summary(DipsPresent_ArthSize)
+
+#DippingPresent = Arthmm   + (1|NestID)
+DipsPresent_Arthmm=glmmTMB(DippingPresent ~ Arthmm + (1|NestID),family="binomial",data=PB_Dips_ArthSize)
+summary(DipsPresent_Arthmm)
 
 
 #Hyp3 - cowbird presence####
