@@ -84,7 +84,16 @@ CER_PB <- read_excel("Initial Data/CER_Parent Behavior_4.2.22.xlsx")
 CER_VM <- read_excel("Initial Data/CER_Video_Master_4.2.22.xlsx")
 
 #Nestling numbers for updated nests as of 1.2.22 #These need to be updated
-NestlingNums <- read_excel("Initial Data/NestlingNums21_1.2.22.xlsx")
+NestlingNums <- read_excel("Initial Data/NestlingNums.xlsx")%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
+  mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
+  mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  select(c(-NestID,-FilmingSession,-Species,-Year,-CanSeeDippingBegging,-Done,-ParentsReturn))
+  
+   
+  
 
 #_____________________________________________________####
 #3. CLEANING & COMBINING DATASETS                      ####
@@ -106,21 +115,8 @@ WPT_VM_cleaned=WPT_VM%>%
   mutate("Year"=(year(Date)))%>%
   filter(!(Year<2021))%>% 
   mutate(Species=recode(Species,"RIE"="DICK"))%>% #fixing WPT mistype
-  mutate(WhoIsScoring=recode(WhoIsScoring,"Wendy"="WPT"))%>% #fixing WPT mistype
-  rename(NumHosts = Dickcissel,
-         NumBHCO  = Cowbird)%>%
-  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
-  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
-  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
-  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
-  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
-  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
-  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
-  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
-  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
-  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
-  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
-  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+  mutate(WhoIsScoring=recode(WhoIsScoring,"Wendy"="WPT")) #fixing WPT mistype
+
 
 WPT_NB_cleaned=WPT_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
@@ -151,21 +147,9 @@ JJC_VM_cleaned=JJC_VM%>%
   mutate("Year"=(year(Date)))%>%
   filter(!(Year==2016))%>%
   filter(!(Year==2017))%>% #One 2016 nest coded as 2017
-  filter(!grepl('KLT RWBL 4 21 (1)', NestIDSession))%>% #duplicate 
-  rename(NumHosts = Dickcissel,
-         NumBHCO  = Cowbird)%>%
-  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
-  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
-  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
-  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
-  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
-  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
-  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
-  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
-  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
-  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%
-  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
-  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+  filter(!grepl('KLT RWBL 4 21 (1)', NestIDSession))#duplicate 
+
+ 
 
 JJC_NB_cleaned=JJC_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
@@ -196,21 +180,7 @@ JNA_VM_cleaned=JNA_VM%>%
          SessionY=Session)%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
-  filter(!(Year<2021))%>% 
-  rename(NumHosts = Dickcissel,
-         NumBHCO  = Cowbird)%>%
-  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
-  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
-  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
-  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
-  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
-  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
-  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
-  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
-  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
-  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
-  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
-  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+  filter(!(Year<2021))
 
 JNA_NB_cleaned=JNA_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
@@ -239,21 +209,7 @@ TEC_VM_cleaned=TEC_VM%>%
          SessionY=Session)%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
-  filter(!(Year<2021))%>% 
-  rename(NumHosts = Dickcissel,
-         NumBHCO  = Cowbird)%>%
-  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
-  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
-  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
-  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
-  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
-  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
-  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
-  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
-  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
-  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
-  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
-  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+  filter(!(Year<2021))
 
 TEC_NB_cleaned=TEC_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
@@ -282,21 +238,7 @@ HKG_VM_cleaned=HKG_VM%>%
          SessionY=Session)%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
-  filter(!(Year<2021))%>% 
-  rename(NumHosts = Dickcissel,
-         NumBHCO  = Cowbird)%>%
-  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
-  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
-  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
-  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
-  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
-  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
-  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
-  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
-  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
-  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
-  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
-  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+  filter(!(Year<2021))
 
 HKG_NB_cleaned=HKG_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
@@ -325,22 +267,7 @@ ESK_VM_cleaned=ESK_VM%>%
          SessionY=Session)%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
-  filter(!(Year<2021))%>% 
-  rename(NumHosts = Dickcissel,
-         NumBHCO  = Cowbird)%>%
-  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
-  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
-  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
-  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
-  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
-  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
-  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
-  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
-  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
-  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
-  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
-  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
-
+  filter(!(Year<2021))
 ESK_NB_cleaned=ESK_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
   add_column("CoderID"="006")%>%
@@ -368,21 +295,7 @@ MFM_VM_cleaned=MFM_VM%>%
          SessionY=Session)%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
-  filter(!(Year<2021))%>% 
-  rename(NumHosts = Dickcissel,
-         NumBHCO  = Cowbird)%>%
-  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
-  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
-  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
-  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
-  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
-  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
-  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
-  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
-  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
-  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
-  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
-  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+  filter(!(Year<2021))
 
 MFM_NB_cleaned=MFM_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
@@ -412,21 +325,7 @@ CER_VM_cleaned=CER_VM%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
   filter(!(Year<2021))%>%
-  filter(!grepl("JNA",WhoIsScoring))%>%
-  rename(NumHosts = Dickcissel,
-         NumBHCO  = Cowbird)%>%
-  left_join(NestlingNums,select(NumHosts,NumBHCO,TotalNestling),by="NestIDSession")%>%
-  mutate(NumHosts.x = replace(NumHosts.x, NumHosts.x==0, NA))%>%
-  mutate(NumHosts.y = replace(NumHosts.y, NumHosts.y==0, NA))%>%
-  mutate(NumBHCO.x  = replace(NumBHCO.x,  NumBHCO.x ==0, NA))%>%
-  mutate(NumBHCO.y  = replace(NumBHCO.y,  NumBHCO.y==0, NA))%>%
-  mutate(TotalNestling.x = replace(TotalNestling.x, TotalNestling.x==0, NA))%>%
-  mutate(TotalNestling.y = replace(TotalNestling.y, TotalNestling.y==0, NA))%>%
-  mutate(NumHosts = coalesce(NumHosts.x, NumHosts.y))%>%
-  mutate(NumBHCO  = coalesce(NumBHCO.x,  NumBHCO.y))%>%
-  mutate(TotalNestling = coalesce(TotalNestling.x,TotalNestling.y))%>%  
-  select(-NumHosts.x,-NumHosts.y,-NumBHCO.x,-NumBHCO.y,-TotalNestling.x,-TotalNestling.y)%>%
-  mutate_at(vars(NumHosts:TotalNestling), ~replace(., is.na(.), 0))
+  filter(!grepl("JNA",WhoIsScoring))
 
 CER_NB_cleaned=CER_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
@@ -464,13 +363,22 @@ VM=VM_combined%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
   mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
-  mutate(NestVisability=recode(NestVisability, 
+  select(-NestlingAgeDays)%>%
+ 
+   mutate(NestVisability=recode(NestVisability, 
                                '100% - 85%'="85-100",
                                '49% - 0%'="0-49",
                                '84% - 50%'="50-84"))%>%
+  
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
-  add_column("Parasitized"=as.logical(.$NumBHCO))%>%
+  mutate(NestIDSession=recode(NestIDSession,'235_EAKI_1_21'="235_EAKI_1_21_1"))%>%
+
+  left_join(NestlingNums,select(NumHosts,NumBHCO),by="NestIDSession")%>%
+  mutate(TotalNestling = as.numeric(NumHosts)+as.numeric(NumBHCO))%>%
+  select(c(-Cowbird,-Dickcissel))%>%
+  
+  add_column("Parasitized"=as.numeric(as.logical(.$NumBHCO)))%>%
   
   #filtering out incomplete nests as of 4.9.22: #recheck which nests are incomplete once all datasets are ready
   filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
@@ -490,7 +398,7 @@ VM=VM_combined%>%
   mutate(OrdDate=yday(Date))%>%
   mutate_at(vars(Species), ~replace_na(., 'DICK'))
 
-summary(VM$FilmDuration)
+summary(as.factor(VM$TotalNestling))
 
 
 NB=NB_combined%>%
@@ -500,16 +408,22 @@ NB=NB_combined%>%
   filter(!grepl('EJT', NestID))%>%
   filter(!grepl('RANC', NestID))%>%
   filter(!grepl('BAD DATA', NestIDSession))%>%
-  mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
-  mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
-  
+    
   mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
   mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   
-  #filtering out incomplete nests as of 4.9.22:  
+  mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
+  mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
+  mutate(NestIDSession=recode(NestIDSession,'235_EAKI_1_21'="235_EAKI_1_21_1"))%>%
   
+  left_join(NestlingNums,select(NumHosts,NumBHCO),by="NestIDSession")%>%
+  mutate(TotalNestling = as.numeric(NumHosts)+as.numeric(NumBHCO))%>%
+  select(c(-Cowbird,-Dickcissel))%>%
+  add_column("Parasitized"=as.numeric(as.logical(.$NumBHCO)))%>%
+  
+  #filtering out incomplete nests as of 4.9.22:  
   filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
   filter(!(NestIDSession=='KLT_EAME_2_21_1'))%>%
   filter(!(NestIDSession=='235_GRSP_2_21_1'))%>%
@@ -535,12 +449,19 @@ PB=PB_combined%>%
   filter(!grepl('EJT', NestID))%>%
   filter(!grepl('RANC', NestID))%>%
   filter(!grepl('BAD DATA', NestIDSession))%>%
-  mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
-  mutate(NestIDn=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
   mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  
+  mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
+  mutate(NestIDn=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
+  mutate(NestIDSession=recode(NestIDSession,'235_EAKI_1_21'="235_EAKI_1_21_1"))%>%
+  
+  left_join(NestlingNums,select(NumHosts,NumBHCO),by="NestIDSession")%>%
+  mutate(TotalNestling = as.numeric(NumHosts)+as.numeric(NumBHCO))%>%
+  select(c(-Cowbird,-Dickcissel))%>%
+  add_column("Parasitized"=as.numeric(as.logical(.$NumBHCO)))%>%
   
   #filtering out incomplete nests as of 4.9.22:   
   filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
@@ -580,4 +501,7 @@ PB=PB_combined%>%
 save(VM,file="VM.RData")
 save(PB,file="PB.RData")
 save(NB,file="NB.RData")
+
+
+
 
