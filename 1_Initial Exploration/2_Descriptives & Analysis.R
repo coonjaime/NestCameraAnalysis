@@ -28,6 +28,7 @@
 #Ethan wd
 setwd("~/Desktop/GRGCoding/NestCameraAnalysis/1_Initial Exploration")
 remove.packages('glmmTMB')
+install.packages('ggeffects')
 install.packages('glmmTMB')
 
 #Josh
@@ -246,6 +247,30 @@ summary(DipsPerChick_ArthID)
 #DipsSumPerChick = ArthSize + (1|NestID)
 DipsPerChick_ArthSize=glmmTMB(DipsSumPerChick ~ ArthSize + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
 summary(DipsPerChick_ArthSize)
+
+#plot in progress
+DipsPerChick_ArthSize_Plot=ggplot(data=DipsPerChick_ArthID, y=Predicted, x=)+  
+  geom_bar(aes(x=ArthSize, y=Predicted,fill=HerbTreat), position=dodge, stat="identity")+
+  scale_fill_manual(values=c("goldenrod3","darkseagreen4","darkslategray"))+
+  scale_x_discrete(labels=c("",""))+
+  scale_y_continuous(limits=c(0,40),expand = c(0, 0)) +
+  geom_errorbar(aes(x = Grazing, ymin = Lower, ymax = Upper, group=HerbTreat),position = dodge, width = 0.2)+
+  labs(y = "Total Nests per Patch", x=" ")+
+  theme_bar_leg()+
+  theme(legend.title=element_blank())
+DipsPerChick_ArthSize_Plot
+
+#Ethan's PocoEco code
+DipsPerChick_ArthSize_Plot <- ggplot(data=PB_Dips_ArthSize, aes(x=as.factor(ArthSize), y=,fill=as.factor(sediment_size))) + 
+  geom_boxplot()+
+  ylab("Arthropod Size")+
+  xlab("Dips Per Chick")+
+  scale_fill_discrete(name= "Info")+
+  theme(panel.grid=element_blank(),
+        axis.line=element_line(color="black", size=1),
+        text=element_text(size=15),
+        axis.text=element_text(size=11,color="black"))
+DipsPerChick_ArthSize_Plot
 
 #DipsSumPerChick = Arthmm   + (1|NestID)
 DipsPerChick_Arthmm=glmmTMB(DipsSumPerChick ~ Arthmm + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
