@@ -66,7 +66,7 @@ theme_bar_leg <- function () {
 #install.packages('easypackages')#do once to manage packages
 library('easypackages')#load package managing package
 
-packages('tidyverse','ggplot2','ggpubr','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
+packages('TMB','ggeffects','tidyverse','ggplot2','ggpubr','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
 
 #_____________________________________________________####
 ####3. DATA  ####
@@ -206,7 +206,8 @@ Dips_By_Chick=PB%>%
   mutate(Chick_Letter=str_sub(variable, start= -1))%>%
   mutate(Chick_Sp=str_sub(variable,-9,-6))%>%
   unite("Chick_ID",c("NestIDSession","Chick_Sp","Chick_Letter"), sep= "_",remove = FALSE)%>%
-  select(Chick_ID,NestIDSession,BehaviorID,value,Chick_Sp)%>%
+  unite("Chick_Beh_ID",c("Chick_ID","BehaviorID"), sep= "_",remove = FALSE)%>%
+  select(Chick_ID,Chick_Beh_ID,NestIDSession,BehaviorID,value,Chick_Sp)%>%
   rename("NumDips"="value")
 
 Fed_By_Chick=PB%>%
@@ -222,19 +223,24 @@ Fed_By_Chick=PB%>%
   mutate(Chick_Letter=str_sub(variable, start= -1))%>%
   mutate(Chick_Sp=str_sub(variable,-8,-5))%>%
   unite("Chick_ID",c("NestIDSession","Chick_Sp","Chick_Letter"), sep= "_",remove = FALSE)%>%
-  select(Chick_ID,BehaviorStart,value,ArthSize,
+  unite("Chick_Beh_ID",c("Chick_ID","BehaviorID"), sep= "_",remove = FALSE)%>%
+  select(Chick_Beh_ID,BehaviorStart,value,ArthSize,
          Arthmm,BehaviorStart,NestlingAgeDays.y,Parasitized,TotalNestling,NumBHCO,NumHosts)%>%
   rename("Fed"="value",
          "NestlingAgeDays"="NestlingAgeDays.y")
 
-ChickData=Dips_ByChick%>%
-  left_join(Fed_By_Chick,by="Chick_ID",na.rm=TRUE)
-  
-  
-  for (val in ChickData) {
-    if(val %% "Fed" == 0)  time_since_fed = count+1
-  }
-  
+ChickData=Dips_By_Chick%>%
+  left_join(Fed_By_Chick,by="Chick_Beh_ID",na.rm=TRUE)%>% 
+  relocate(Fed, .after = NumHosts)
+
+last_event_index=cumsum(ChickData$Fed)+1
+last_event_index=c(1,last_event_index[1:length(last_event_index)-1])
+last_event_time=c(as.numeric(NA),ChickData[which(ChickData$Fed==1),"BehaviorStart"])[last_event_index]
+
+#Time-Since-Fed
+ChickData$TSF=ChickData$BehaviorStart-last_event_time
+
+
 
 
 
@@ -250,14 +256,10 @@ PB_Dips=PB%>%
   filter(BehaviorCode=="Provisioning")%>%
   filter(Species=="DICK")%>%
   group_by(NestIDSession)%>%
-  mutate(DipsSum = rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,
-                                 BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T))%>%
-  mutate(DipsSumPerChick = rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,
-                                         BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T)/TotalNestling)%>%
-  mutate(SessionsSum = rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,
-                                     BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T))%>%
-  mutate(SessionsSumPerChick = rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,
-                                             BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T)/TotalNestling)
+  mutate(DipsSum =  rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T))%>%
+  mutate(DipsSumPerChick = rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T)/TotalNestling)%>%
+  mutate(SessionsSum =  rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T))%>%
+  mutate(SessionsSumPerChick =  rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T)/TotalNestling)
 
 
 
