@@ -29,7 +29,7 @@
 setwd("~/Desktop/GRGCoding/NestCameraAnalysis/1_Initial Exploration")
 remove.packages('glmmTMB')
 install.packages('ggeffects')
-install.packages('glmmTMB')
+install.packages('glmmTMB', type = 'source')
 
 #Josh
 setwd("~/RStudio/NestCameraAnalysis/1_Initial Exploration")
@@ -56,6 +56,7 @@ theme_bar_leg <- function () {
         axis.text=element_text(size=14,color="black"),
         axis.line=element_line(color="black",size=1),
         panel.background=element_rect("snow2"),
+        panel.grid=element_blank(),
         legend.position="right",
         legend.text=element_text(size=10, color="black"))}
 
@@ -65,7 +66,7 @@ theme_bar_leg <- function () {
 #install.packages('easypackages')#do once to manage packages
 library('easypackages')#load package managing package
 
-packages('TMB','tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
+packages("TMB",'tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
 
 #_____________________________________________________####
 ####3. DATA  ####
@@ -249,23 +250,30 @@ DipsPerChick_ArthSize=glmmTMB(DipsSumPerChick ~ ArthSize + (1|NestID),family="ga
 summary(DipsPerChick_ArthSize)
 
 #plot in progress
-DipsPerChick_ArthSize_Plot=ggplot(data=DipsPerChick_ArthID, y=Predicted, x=)+  
-  geom_bar(aes(x=ArthSize, y=Predicted,fill=HerbTreat), position=dodge, stat="identity")+
-  scale_fill_manual(values=c("goldenrod3","darkseagreen4","darkslategray"))+
-  scale_x_discrete(labels=c("",""))+
-  scale_y_continuous(limits=c(0,40),expand = c(0, 0)) +
-  geom_errorbar(aes(x = Grazing, ymin = Lower, ymax = Upper, group=HerbTreat),position = dodge, width = 0.2)+
-  labs(y = "Total Nests per Patch", x=" ")+
-  theme_bar_leg()+
-  theme(legend.title=element_blank())
+
+#producing predicted values
+DipsPerChick_ArthSize_Pred = as.data.frame(ggpredict(DipsPerChick_ArthSize,c("ArthSize"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
+colnames(DipsPerChick_ArthSize_Pred)=c("ArthSize", "Predicted","SE","Lower","Upper", "group") #renames columns
+print(DipsPerChick_ArthSize_Pred) 
+
+dodge=position_dodge(.9)
+DipsPerChick_ArthSize_Plot=ggplot(data=DipsPerChick_ArthSize_Pred, aes(y=Predicted, x=ArthSize,fill=ArthSize))+  
+  geom_bar(aes(y=Predicted, x=ArthSize),position=dodge, stat="identity")+
+  scale_fill_manual(values=c("blue","darkblue","red"))+
+  #scale_x_discrete(labels=c("",""))+
+  scale_y_continuous(expand = c(0, 0)) +
+  geom_errorbar(aes(x = ArthSize, ymin = Lower, ymax = Upper),position = dodge, width = 0.2)+
+  labs(y = "Dips/Chick", x="Arthropod Size")+
+  theme(legend.title=element_blank())+
+  theme_bar_noleg()
 DipsPerChick_ArthSize_Plot
 
 #Ethan's PocoEco code
-DipsPerChick_ArthSize_Plot <- ggplot(data=PB_Dips_ArthSize, aes(x=as.factor(ArthSize), y=,fill=as.factor(sediment_size))) + 
+DipsPerChick_ArthSize_Plot <- ggplot(data=PB_Dips_ArthSize, aes(x=as.factor(ArthSize), fill=ArthSize,y=DipsSumPerChick)) + 
   geom_boxplot()+
-  ylab("Arthropod Size")+
-  xlab("Dips Per Chick")+
-  scale_fill_discrete(name= "Info")+
+  ylab("Dips Per Chick")+
+  xlab("Arthropod Size")+
+  scale_fill_discrete()+
   theme(panel.grid=element_blank(),
         axis.line=element_line(color="black", size=1),
         text=element_text(size=15),
@@ -312,22 +320,7 @@ summary(DipsPerChick_BHCONum)
 DipsPerChick_Parasite=glmmTMB(DippingPresent ~ Parasitized + (1|NestID),family="gaussian", data=PB_Dips)
 summary(DipsPerChick_Parasite)
 
-#producing predicted values
-TotNests_Pred = as.data.frame(ggpredict(TotNestsFinal,c("HerbTreat", "GrazingYesNo"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
-colnames(TotNests_Pred)=c("HerbTreat", "Predicted","SE","Lower","Upper", "Grazing") #renames columns
-print(TotNests_Pred) 
 
-#plot
-TotNests_Plot=ggplot(data=TotNests_Pred, y=Predicted, x=Grazing)+  
-  geom_bar(aes(x=Grazing, y=Predicted,fill=HerbTreat), position=dodge, stat="identity")+
-  scale_fill_manual(values=c("goldenrod3","darkseagreen4","darkslategray"))+
-  scale_x_discrete(labels=c("Ungrazed","Grazed"))+
-  scale_y_continuous(limits=c(0,40),expand = c(0, 0)) +
-  geom_errorbar(aes(x = Grazing, ymin = Lower, ymax = Upper, group=HerbTreat),position = dodge, width = 0.2)+
-  labs(y = "Total Nests per Patch", x=" ")+
-  theme_bar_leg()+
-  theme(legend.title=element_blank())
-TotNests_Plot
 
 #_____________________________________________________####
 ####8. Prelim analysis for ESA ####
