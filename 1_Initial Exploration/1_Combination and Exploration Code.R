@@ -496,7 +496,7 @@ PB=PB_combined%>%
                             Species=="RWBL" & ArthSize=="Medium" ~ 28.95,
                             Species=="RWBL" & ArthSize=="Large" ~ 44.1,
                             TRUE ~ NA_real_))%>%
-  mutate_at(c(23:58), as.numeric)
+  mutate_at(c(23:58), as.numeric) ###This only creates 0s or 1s for Dips, Sessions. How to fix?
   
 save(VM,file="VM.RData")
 save(PB,file="PB.RData")

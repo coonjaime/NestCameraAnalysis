@@ -66,7 +66,7 @@ theme_bar_leg <- function () {
 #install.packages('easypackages')#do once to manage packages
 library('easypackages')#load package managing package
 
-packages('tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
+packages('tidyverse','ggplot2','ggpubr','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
 
 #_____________________________________________________####
 ####3. DATA  ####
@@ -128,10 +128,10 @@ PB_dips_bySpecies=PB%>%
 ####4. Descriptive Data ####
 
 #Dipping percentages
-DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=Species,y=mean))+
+DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=reorder(Species, -mean),y=mean))+
   geom_col(aes(color="black",fill=Species))+
-  scale_x_discrete(labels=c("Bobolink","Brown\nThrasher","Common\nGrackle","Dickcissel","Eastern\nMeadowlark","Gray\nCatbird","Grasshopper\nSparrow","Red-winged\nBlackbird"))+
-  scale_fill_manual(values=c("burlywood1","sienna2","mediumorchid4","goldenrod1","yellow2","gray50","peru","red3"))+
+  scale_x_discrete(labels=c("Eastern\nMeadowlark","Common\nGrackle","Dickcissel","Bobolink","Brown\nThrasher","Gray\nCatbird","Grasshopper\nSparrow","Red-winged\nBlackbird"))+
+  scale_fill_manual(values=c("burlywood1","sienna2","orchid4","gold2","yellow2","gray50","peru","orangered3"))+
   scale_color_manual(values = "black")+
   scale_y_continuous(expand=c(0,0),limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
   labs(y="% Provisioning with Dipping",x="")+
@@ -154,7 +154,38 @@ PB_Dips_Descr=PB%>%
                                      BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T))%>%
   mutate(SessionsSumPerChick = rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,
                                              BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T)/TotalNestling)
+#Rows 294:302 have NAs for TotalNestling var, so PerChick variables not working
 
+
+OnlyDippersAllowed <- PB%>% #Might not be necessary after Dip #s are fixed
+  filter(BehaviorCode=="Provisioning")%>%
+  filter(Species=="DICK"|Species=="RWBL")%>%
+  group_by(NestID)%>%
+  filter(DippingPresent==T)%>%
+  .[!duplicated(.$NestID),60]%>%
+  left_join(PB_Dips_Descr)
+
+
+Dipping_Box1 <- ggplot(OnlyDippersAllowed,aes(x=Species,y=DipsSum))+
+  geom_boxplot(aes(fill=Species))+
+  scale_x_discrete(labels=c("Dickcissel","Red-winged\nBlackbird"))+
+  scale_fill_manual(values=c("gold2","orangered3"))+
+  scale_color_manual(values = "black")+
+  labs(y="Number of Dips in Provisioning")+
+  theme_bar_noleg()
+Dipping_Box1
+
+Dipping_Box2 <- ggplot(OnlyDippersAllowed,aes(x=Species,y=DipsSumPerChick))+
+  geom_boxplot(aes(fill=Species))+
+  scale_x_discrete(labels=c("Dickcissel","Red-winged\nBlackbird"))+
+  scale_fill_manual(values=c("gold2","orangered3"))+
+  scale_color_manual(values = "black")+
+  labs(y="Number of Dips per Chick")+
+  theme_bar_noleg()
+Dipping_Box2
+
+DoubleDipping <- ggarrange(Dipping_Box1,Dipping_Box2,nrow = 1, labels = "AUTO")
+ggsave(DoubleDipping,filename="DoubleDipping.png",dpi=600,units="in",height=5,width=8)
 
 #Ethan _____________________________________________________####
 ####5. Analysis for Epic Expo - DICK ####
