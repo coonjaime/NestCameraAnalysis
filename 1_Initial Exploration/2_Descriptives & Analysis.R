@@ -157,10 +157,9 @@ PB_Dips_Descr=PB%>%
 #Rows 294:302 have NAs for TotalNestling var, so PerChick variables not working
 
 
-OnlyDippersAllowed <- PB%>% #Might not be necessary after Dip #s are fixed
+OnlyDippersAllowed <- PB%>%
   filter(BehaviorCode=="Provisioning")%>%
   filter(Species=="DICK"|Species=="RWBL")%>%
-  group_by(NestID)%>%
   filter(DippingPresent==T)%>%
   .[!duplicated(.$NestID),60]%>%
   left_join(PB_Dips_Descr)
@@ -175,16 +174,16 @@ Dipping_Box1 <- ggplot(OnlyDippersAllowed,aes(x=Species,y=DipsSum))+
   theme_bar_noleg()
 Dipping_Box1
 
-Dipping_Box2 <- ggplot(OnlyDippersAllowed,aes(x=Species,y=DipsSumPerChick))+
+Dipping_Box2 <- ggplot(OnlyDippersAllowed,aes(x=Species,y=SessionsSum))+
   geom_boxplot(aes(fill=Species))+
   scale_x_discrete(labels=c("Dickcissel","Red-winged\nBlackbird"))+
   scale_fill_manual(values=c("gold2","orangered3"))+
   scale_color_manual(values = "black")+
-  labs(y="Number of Dips per Chick")+
+  labs(y="Number of Dipping Sessions")+
   theme_bar_noleg()
 Dipping_Box2
 
-DoubleDipping <- ggarrange(Dipping_Box1,Dipping_Box2,nrow = 1, labels = "AUTO")
+DoubleDipping <- ggarrange(Dipping_Box1,Dipping_Box2,nrow = 1, labels = "AUTO") #How to deal with all these outliers? Restrict to events with >0 dips?
 ggsave(DoubleDipping,filename="DoubleDipping.png",dpi=600,units="in",height=5,width=8)
 
 #Ethan _____________________________________________________####
