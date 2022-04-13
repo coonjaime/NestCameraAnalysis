@@ -66,7 +66,7 @@ theme_bar_leg <- function () {
 #install.packages('easypackages')#do once to manage packages
 library('easypackages')#load package managing package
 
-packages("TMB",'tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
+packages('tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
 
 #_____________________________________________________####
 ####3. DATA  ####
@@ -283,6 +283,10 @@ DipsPerChick_ArthSize_Plot
 #DipsSumPerChick = Arthmm   + (1|NestID)
 DipsPerChick_Arthmm=glmmTMB(DipsSumPerChick ~ Arthmm + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
 summary(DipsPerChick_Arthmm)
+
+DipsPerChick_Arthmm_Pred = as.data.frame(ggpredict(DipsPerChick_Arthmm,c("Arthmm"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
+colnames(DipsPerChick_Arthmm_Pred)=c("Arthmm", "Predicted","SE","Lower","Upper", "group") #renames columns
+print(DipsPerChick_Arthmm_Pred) 
 
 #DippingPresent =  ArthID  + (1|NestID)
 DipsPresent_ArthID=glmmTMB(DippingPresent ~ ArthID + (1|NestID),family="binomial",data=PB_Dips_ArthID)
