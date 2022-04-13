@@ -52,35 +52,35 @@ veg<-read_csv("Initial Data/NestVeg_2.Mar.2022.csv")%>%  #Check about NAs in dat
   summarize_at(vars(Fear, Csg, Wsg, Forb,Legume,Covlit,Robel,LitDepth),mean)
 
 WPT_NB <- read_excel("Initial Data/WPT_Nestling Behavior_4.9.22.xlsx")
-WPT_PB <- read_excel("Initial Data/WPT_Parent Behavior_4.9.22.xlsx") 
+WPT_PB <- read_excel("Initial Data/WPT_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical")) 
 WPT_VM <- read_excel("Initial Data/WPT_Video_Master_4.9.22.xlsx")
 
 JJC_NB <- read_excel("Initial Data/JJC_Nestling Behavior_4.9.22.xlsx")
-JJC_PB <- read_excel("Initial Data/JJC_Parent Behavior_4.9.22.xlsx")
+JJC_PB <- read_excel("Initial Data/JJC_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 JJC_VM <- read_excel("Initial Data/JJC_Video_Master_4.9.22.xlsx")
 
 JNA_NB <- read_excel("Initial Data/JNA_Nestling Behavior_4.2.22.xlsx")
-JNA_PB <- read_excel("Initial Data/JNA_Parent Behavior_4.2.22.xlsx")
+JNA_PB <- read_excel("Initial Data/JNA_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 JNA_VM <- read_excel("Initial Data/JNA_Video_Master_4.2.22.xlsx")
 
 TEC_NB <- read_excel("Initial Data/TEC_Nestling Behavior_4.2.22.xlsx")
-TEC_PB <- read_excel("Initial Data/TEC_Parent Behavior_4.2.22.xlsx")
+TEC_PB <- read_excel("Initial Data/TEC_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 TEC_VM <- read_excel("Initial Data/TEC_Video_Master_4.2.22.xlsx")
 
 HKG_NB <- read_excel("Initial Data/HKG_Nestling Behavior_4.2.22.xlsx")
-HKG_PB <- read_excel("Initial Data/HKG_Parent Behavior_4.2.22.xlsx")
+HKG_PB <- read_excel("Initial Data/HKG_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 HKG_VM <- read_excel("Initial Data/HKG_Video_Master_4.2.22.xlsx")
 
 ESK_NB <- read_excel("Initial Data/ESK_Nestling Behavior_4.9.22.xlsx")
-ESK_PB <- read_excel("Initial Data/ESK_Parent Behavior_4.9.22.xlsx")
+ESK_PB <- read_excel("Initial Data/ESK_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 ESK_VM <- read_excel("Initial Data/ESK_Video_Master_4.9.22.xlsx")
 
 MFM_NB <- read_excel("Initial Data/MFM_Nestling Behavior_1.2.22.xlsx")
-MFM_PB <- read_excel("Initial Data/MFM_Parent Behavior_1.2.22.xlsx")
+MFM_PB <- read_excel("Initial Data/MFM_Parent Behavior_1.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 MFM_VM <- read_excel("Initial Data/MFM_Video_Master_1.2.22.xlsx")
 
 CER_NB <- read_excel("Initial Data/CER_Nestling Behavior_4.2.22.xlsx")
-CER_PB <- read_excel("Initial Data/CER_Parent Behavior_4.2.22.xlsx")
+CER_PB <- read_excel("Initial Data/CER_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 CER_VM <- read_excel("Initial Data/CER_Video_Master_4.2.22.xlsx")
 
 #Nestling numbers for updated nests as of 1.2.22 #These need to be updated
@@ -495,8 +495,7 @@ PB=PB_combined%>%
                             Species=="RWBL" & ArthSize=="Small" ~ 10.65,
                             Species=="RWBL" & ArthSize=="Medium" ~ 28.95,
                             Species=="RWBL" & ArthSize=="Large" ~ 44.1,
-                            TRUE ~ NA_real_))%>%
-  mutate_at(c(23:58), as.numeric) ###This only creates 0s or 1s for Dips, Sessions. How to fix?
+                            TRUE ~ NA_real_))
   
 save(VM,file="VM.RData")
 save(PB,file="PB.RData")
