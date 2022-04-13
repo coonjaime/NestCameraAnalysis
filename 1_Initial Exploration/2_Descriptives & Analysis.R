@@ -29,6 +29,7 @@
 setwd("~/Desktop/GRGCoding/NestCameraAnalysis/1_Initial Exploration")
 remove.packages('glmmTMB')
 install.packages('ggeffects')
+install.packages('TMB', type = 'source')
 install.packages('glmmTMB', type = 'source')
 
 #Josh
@@ -278,12 +279,9 @@ DipsPerChick_ArthID=glmmTMB(DipsSumPerChick ~ ArthID + (1|NestID),family="gaussi
 summary(DipsPerChick_ArthID)
 
 #DipsSumPerChick = ArthSize + (1|NestID)
-DipsPerChick_ArthSize=glmmTMB(DipsSumPerChick ~ ArthSize + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
+DipsPerChick_ArthSize=glmmTMB(as.numeric(DipsSumPerChick) ~ ArthSize + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
 summary(DipsPerChick_ArthSize)
 
-#plot in progress
-
-#producing predicted values
 DipsPerChick_ArthSize_Pred = as.data.frame(ggpredict(DipsPerChick_ArthSize,c("ArthSize"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
 colnames(DipsPerChick_ArthSize_Pred)=c("ArthSize", "Predicted","SE","Lower","Upper", "group") #renames columns
 print(DipsPerChick_ArthSize_Pred) 
@@ -291,49 +289,49 @@ print(DipsPerChick_ArthSize_Pred)
 dodge=position_dodge(.9)
 DipsPerChick_ArthSize_Plot=ggplot(data=DipsPerChick_ArthSize_Pred, aes(y=Predicted, x=ArthSize,fill=ArthSize))+  
   geom_bar(aes(y=Predicted, x=ArthSize),position=dodge, stat="identity")+
-  scale_fill_manual(values=c("blue","darkblue","red"))+
+  scale_fill_manual(values=c("goldenrod","brown","darkgreen"))+
   #scale_x_discrete(labels=c("",""))+
   scale_y_continuous(expand = c(0, 0)) +
   geom_errorbar(aes(x = ArthSize, ymin = Lower, ymax = Upper),position = dodge, width = 0.2)+
   labs(y = "Dips/Chick", x="Arthropod Size")+
   theme(legend.title=element_blank())+
-  theme_bar_noleg()
-DipsPerChick_ArthSize_Plot
-
-#Ethan's PocoEco code
-DipsPerChick_ArthSize_Plot <- ggplot(data=PB_Dips_ArthSize, aes(x=as.factor(ArthSize), fill=ArthSize,y=DipsSumPerChick)) + 
-  geom_boxplot()+
-  ylab("Dips Per Chick")+
-  xlab("Arthropod Size")+
-  scale_fill_discrete()+
-  theme(panel.grid=element_blank(),
-        axis.line=element_line(color="black", size=1),
-        text=element_text(size=15),
-        axis.text=element_text(size=11,color="black"))
+  theme_bar_leg()
 DipsPerChick_ArthSize_Plot
 
 #DipsSumPerChick = Arthmm   + (1|NestID)
 DipsPerChick_Arthmm=glmmTMB(DipsSumPerChick ~ Arthmm + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
 summary(DipsPerChick_Arthmm)
 
-DipsPerChick_Arthmm_Pred = as.data.frame(ggpredict(DipsPerChick_Arthmm,c("Arthmm"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
-colnames(DipsPerChick_Arthmm_Pred)=c("Arthmm", "Predicted","SE","Lower","Upper", "group") #renames columns
-print(DipsPerChick_Arthmm_Pred) 
-
 #DippingPresent =  ArthID  + (1|NestID)
 DipsPresent_ArthID=glmmTMB(DippingPresent ~ ArthID + (1|NestID),family="binomial",data=PB_Dips_ArthID)
 summary(DipsPresent_ArthID)
 
 #DippingPresent = ArthSize + (1|NestID)
-DipsPresent_ArthSize=glmmTMB(DippingPresent ~ ArthSize + (1|NestID),family="binomial",data=PB_Dips_ArthSize)
+DipsPresent_ArthSize=glmmTMB(as.numeric(DippingPresent) ~ ArthSize + (1|NestID),family="binomial",data=PB_Dips_ArthSize)
 summary(DipsPresent_ArthSize)
+
+DipsPresent_ArthSize_Pred = as.data.frame(ggpredict(DipsPresent_ArthSize,c("ArthSize"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
+colnames(DipsPresent_ArthSize_Pred)=c("ArthSize", "Predicted","SE","Lower","Upper", "group") #renames columns
+print(DipsPresent_ArthSize_Pred) 
+
+dodge=position_dodge(.9)
+DipsPresent_ArthSize_Plot=ggplot(data=DipsPresent_ArthSize_Pred, aes(y=Predicted, x=ArthSize,fill=ArthSize))+  
+  geom_bar(aes(y=Predicted, x=ArthSize),position=dodge, stat="identity")+
+  scale_fill_manual(values=c("goldenrod","brown", "darkgreen"))+
+  scale_x_discrete(labels=c("Small","Medium", "Large"))+
+  scale_y_continuous(expand = c(0, 0)) +
+  geom_errorbar(aes(x = ArthSize, ymin = Lower, ymax = Upper),position = dodge, width = 0.2)+
+  labs(y = "Dipping Present", x="Arthropod Size")+
+  theme(legend.title=element_blank())+
+  theme_bar_leg()
+DipsPresent_ArthSize_Plot
 
 #DippingPresent = Arthmm   + (1|NestID)
 DipsPresent_Arthmm=glmmTMB(DippingPresent ~ Arthmm + (1|NestID),family="binomial",data=PB_Dips_ArthSize)
 summary(DipsPresent_Arthmm)
 
 
-#Hyp3 - cowbird presence####
+#########Hyp3 - cowbird presence##########################################################
 
       #DippingPresent = NumBHCO   + (1|NestID) (family would need to be binomial)
       #DippingPresent = Parasitized + (1|NestID)
@@ -348,15 +346,29 @@ summary(DipsPresent_BHCONum)
 DipsPresent_Parasite=glmmTMB(DippingPresent ~ Parasitized + (1|NestID),family="binomial", data=PB_Dips)
 summary(DipsPresent_Parasite)
 
+DipsPresent_Parasite_Pred = as.factor(ggpredict(DipsPresent_Parasite,c("Parasitized"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
+colnames(DipsPresent_Parasite_Pred)=c("Parasitized", "Predicted","SE","Lower","Upper","group") #renames columns
+print(DipsPresent_Parasite_Pred) 
+
+dodge=position_dodge(.9)
+DipsPerChick_Parasite_Plot=ggplot(data=DipsPerChick_Parasite_Pred, aes(y=Predicted, x=as.factor(Parasitized),fill=as.factor(Parasitized)))+  
+  geom_bar(aes(y=Predicted, x=as.factor(Parasitized)),position=dodge, stat="identity")+
+  scale_fill_manual(values=c("darkorange4","gray20"))+
+  scale_x_discrete(labels=c("No","Yes"))+
+  scale_y_continuous(expand = c(0, 0)) +
+  geom_errorbar(aes(x = as.factor(Parasitized), ymin = Lower, ymax = Upper),position = dodge, width = 0.2)+
+  labs(y = "Dipping Present", x="Parasitized")+
+  theme(legend.title=element_blank())+
+  theme_bar_noleg()
+DipsPerChick_Parasite_Plot
+
 #DipsSumPerChick =  NumBHCO  + (1|NestID)
-DipsPerChick_BHCONum=glmmTMB(DippingPresent ~ NumBHCO + (1|NestID),family="gaussian", data=PB_Dips)
+DipsPerChick_BHCONum=glmmTMB(DipsSumPerChick ~ NumBHCO + (1|NestID),family="gaussian", data=PB_Dips)
 summary(DipsPerChick_BHCONum)
 
 #DipsSumPerChick = Parasitized + (1|NestID)
-DipsPerChick_Parasite=glmmTMB(DippingPresent ~ Parasitized + (1|NestID),family="gaussian", data=PB_Dips)
+DipsPerChick_Parasite=glmmTMB(as.numeric(DipsSumPerChick) ~ as.factor(Parasitized) + (1|NestID),family="gaussian", data=PB_Dips)
 summary(DipsPerChick_Parasite)
-
-
 
 #_____________________________________________________####
 ####8. Prelim analysis for ESA ####
