@@ -62,7 +62,6 @@ theme_bar_leg <- function () {
         legend.text=element_text(size=10, color="black"))}
 
 #_____________________________________________________####
-
 ####2. PACKAGES                                       ####
 #install.packages('easypackages')#do once to manage packages
 library('easypackages')#load package managing package
@@ -135,10 +134,11 @@ DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=r
   scale_fill_manual(values=c("burlywood1","sienna2","orchid4","gold2","yellow2","gray50","peru","orangered3"))+
   scale_color_manual(values = "black")+
   scale_y_continuous(expand=c(0,0),limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
+  geom_text(label = paste("n =",filter(PB_dips_bySpecies,Species!="EAKI")$nSessions), nudge_y=-.03, fontface="bold")+
   labs(y="% Provisioning with Dipping",x="")+
   theme_bar_noleg()+
   theme(legend.position = "none")
-DipPercent_bySpecies #Include n= for each species
+DipPercent_bySpecies #Include FISP when ready
 
 ggsave(DipPercent_bySpecies,filename="DipPercent_by_Species.png",dpi=600,units="in",height=5,width=8)
 
@@ -166,25 +166,21 @@ OnlyDippersAllowed <- PB%>%
   left_join(PB_Dips_Descr)
 
 
-Dipping_Box1 <- ggplot(OnlyDippersAllowed,aes(x=Species,y=DipsSum))+
-  geom_boxplot(aes(fill=Species))+
-  scale_x_discrete(labels=c("Dickcissel","Red-winged\nBlackbird"))+
-  scale_fill_manual(values=c("gold2","orangered3"))+
-  scale_color_manual(values = "black")+
-  labs(y="Number of Dips in Provisioning")+
-  theme_bar_noleg()
-Dipping_Box1
+Dipping_Box1 <- ggplot(OnlyDippersAllowed,aes(x=DipsSum,fill=Species))+
+  geom_histogram()+
+  scale_fill_manual(values=c("gold2","orangered3"),labels=c("Dickcissel","Red-winged Blackbird"))+
+  labs(x="Number of Dips in Provisioning",y="Frequency")+
+  theme_bar_leg()
+Dipping_Box1 #These likely need to have y axis transformed, but having trouble with it right now
 
-Dipping_Box2 <- ggplot(OnlyDippersAllowed,aes(x=Species,y=SessionsSum))+
-  geom_boxplot(aes(fill=Species))+
-  scale_x_discrete(labels=c("Dickcissel","Red-winged\nBlackbird"))+
-  scale_fill_manual(values=c("gold2","orangered3"))+
-  scale_color_manual(values = "black")+
-  labs(y="Number of Dipping Sessions")+
-  theme_bar_noleg()
+Dipping_Box2 <- ggplot(OnlyDippersAllowed,aes(x=SessionsSum,fill=Species))+
+  geom_histogram()+
+  scale_fill_manual(values=c("gold2","orangered3"),labels=c("Dickcissel","Red-winged Blackbird"))+
+  labs(x="Number of Dipping Sessions in Provisioning",y="Frequency")+
+  theme_bar_leg()
 Dipping_Box2
 
-DoubleDipping <- ggarrange(Dipping_Box1,Dipping_Box2,nrow = 1, labels = "AUTO") #How to deal with all these outliers? Restrict to events with >0 dips?
+DoubleDipping <- ggarrange(Dipping_Box1,Dipping_Box2,nrow = 1,labels = "AUTO",common.legend = T,legend="bottom") 
 ggsave(DoubleDipping,filename="DoubleDipping.png",dpi=600,units="in",height=5,width=8)
 
 #Ethan _____________________________________________________####
