@@ -166,22 +166,27 @@ OnlyDippersAllowed <- PB%>%
   left_join(PB_Dips_Descr)
 
 
-Dipping_Box1 <- ggplot(OnlyDippersAllowed,aes(x=DipsSum,fill=Species))+
+Dipping_Hist1 <- ggplot(filter(OnlyDippersAllowed,DipsSum>0),aes(x=DipsSum,fill=Species))+
   geom_histogram()+
   scale_fill_manual(values=c("gold2","orangered3"),labels=c("Dickcissel","Red-winged Blackbird"))+
-  labs(x="Number of Dips in Provisioning",y="Frequency")+
+  scale_y_continuous(limits=c(0,165))+
+  labs(x="Number of Dips",y="")+
   theme_bar_leg()
-Dipping_Box1 #These likely need to have y axis transformed, but having trouble with it right now
+Dipping_Hist1 
 
-Dipping_Box2 <- ggplot(OnlyDippersAllowed,aes(x=SessionsSum,fill=Species))+
+Dipping_Hist2 <- ggplot(filter(OnlyDippersAllowed,SessionsSum>0),aes(x=SessionsSum,fill=Species))+
   geom_histogram()+
   scale_fill_manual(values=c("gold2","orangered3"),labels=c("Dickcissel","Red-winged Blackbird"))+
-  labs(x="Number of Dipping Sessions in Provisioning",y="Frequency")+
+  scale_y_continuous(limits = c(0,165))+
+  labs(x="Number of Dipping Sessions",y="")+
   theme_bar_leg()
-Dipping_Box2
+Dipping_Hist2
 
-DoubleDipping <- ggarrange(Dipping_Box1,Dipping_Box2,nrow = 1,labels = "AUTO",common.legend = T,legend="bottom") 
-ggsave(DoubleDipping,filename="DoubleDipping.png",dpi=600,units="in",height=5,width=8)
+#Histograms currently do not include 0s to make the plot more readable. We can mess with this/y axis scaling if needed
+DoubleDipping <- ggarrange(Dipping_Hist1,Dipping_Hist2,nrow = 1,labels = "AUTO",common.legend = T,legend="bottom")
+annotate_figure(DoubleDipping,left = text_grob("Frequency",face = "bold",rot = 90,size = 16))%>%
+  ggsave(filename="DoubleDipping.png",dpi=600,units="in",height=5,width=8)
+
 
 #Ethan _____________________________________________________####
 ####5. Analysis for Epic Expo - DICK ####
