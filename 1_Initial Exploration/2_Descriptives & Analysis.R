@@ -134,13 +134,27 @@ DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=r
   scale_fill_manual(values=c("burlywood1","sienna2","orchid4","gold2","yellow2","gray50","peru","orangered3"))+
   scale_color_manual(values = "black")+
   scale_y_continuous(expand=c(0,0),limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
-  geom_text(label = paste("n =",filter(PB_dips_bySpecies,Species!="EAKI")$nSessions), nudge_y=-.03, fontface="bold")+
-  labs(y="% Provisioning with Dipping",x="")+
+  geom_text(label = paste("n =",filter(PB_dips_bySpecies,Species!="EAKI")$nSessions), nudge_y=-.04, fontface="bold")+
+  labs(y="% of Provisioning with Dipping",x="")+
   theme_bar_noleg()+
-  theme(legend.position = "none")
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 DipPercent_bySpecies #Include FISP when ready
 
 ggsave(DipPercent_bySpecies,filename="DipPercent_by_Species.png",dpi=600,units="in",height=5,width=8)
+
+DipPercent_Flip <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=reorder(Species, mean),y=mean))+
+  geom_col(aes(color="black",fill=Species))+
+  scale_x_discrete(labels=c("Red-winged\nBlackbird","Grasshopper\nSparrow","Gray\nCatbird","Brown\nThrasher","Bobolink","Dickcissel","Common\nGrackle","Eastern\nMeadowlark"))+
+  scale_fill_manual(values=c("burlywood1","sienna2","orchid4","gold2","yellow2","gray50","peru","orangered3"))+
+  scale_color_manual(values = "black")+
+  scale_y_continuous(expand=c(0,0),limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
+  geom_text(label = paste("n =",filter(PB_dips_bySpecies,Species!="EAKI")$nSessions), nudge_y=-.05, fontface="bold")+
+  labs(y="% of Provisioning with Dipping",x="")+
+  coord_flip()+
+  theme_bar_noleg()
+DipPercent_Flip #Include FISP when ready
+
+ggsave(DipPercent_Flip,filename="DipPercent_Flip.png",dpi=600,units="in",height=5,width=8)
 
 #gift for Josh -I think this could be used to create your boxplot!
 PB_Dips_Descr=PB%>%
