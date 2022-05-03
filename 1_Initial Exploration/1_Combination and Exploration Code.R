@@ -79,6 +79,10 @@ MFM_NB <- read_excel("Initial Data/MFM_Nestling Behavior_1.2.22.xlsx")
 MFM_PB <- read_excel("Initial Data/MFM_Parent Behavior_1.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 MFM_VM <- read_excel("Initial Data/MFM_Video_Master_1.2.22.xlsx")
 
+MFM_NB2 <- read_excel("Initial Data/MFM_Nestling Behavior_9.15.21.xlsx")
+MFM_PB2 <- read_excel("Initial Data/MFM_Parent Behavior_9.15.21.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+MFM_VM2 <- read_excel("Initial Data/MFM_Video_Master_9.15.21.xlsx")
+
 CER_NB <- read_excel("Initial Data/CER_Nestling Behavior_4.2.22.xlsx")
 CER_PB <- read_excel("Initial Data/CER_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 CER_VM <- read_excel("Initial Data/CER_Video_Master_4.2.22.xlsx")
@@ -315,6 +319,39 @@ MFM_PB_cleaned=MFM_PB%>%
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
 
+#MOLLY2
+MFM_VM_cleaned2=MFM_VM2%>% #These datasheets are for BSH FISP 1 21 data
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="007")%>%
+  rename(FilmStartTime=StartTime,
+         FilmEndTime=EndTime,
+         SessionY=Session)%>%
+  mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
+  mutate("Year"=(year(Date)))%>%
+  filter(!(Year<2021))%>%
+  filter(NestID=="BSH FISP 1 21")%>%
+  mutate(NestIDSession=recode(NestIDSession,"BSH FISP 1 21(1)"="BSH FISP 1 21 (1)")) #fixing MFM mistype
+
+MFM_NB_cleaned2=MFM_NB2%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="007")%>%
+  unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
+  mutate(NestIDSession=recode(NestIDSession,"BSH FISP 1 21(1)"="BSH FISP 1 21 (1)")) %>%
+  left_join(MFM_VM_cleaned2,select(
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
+    by="NestIDSession")%>%
+  filter(!(Year<2021)) 
+
+MFM_PB_cleaned2=MFM_PB2%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
+  add_column("CoderID"="007")%>%
+  unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
+  mutate(NestIDSession=recode(NestIDSession,"BSH FISP 1 21(1)"="BSH FISP 1 21 (1)")) %>%
+  left_join(MFM_VM_cleaned2,select(
+    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    by="NestIDSession")%>%
+  filter(!(Year<2021)) 
+
 #CLAUDETTE    #Is there data we need from CER's old access file?
 CER_VM_cleaned=CER_VM%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
@@ -347,9 +384,9 @@ CER_PB_cleaned=CER_PB%>%
   
 compare_df_cols(JJC_PB_cleaned,JNA_PB_cleaned) #to compare before merging
 
-NB_combined=rbind(WPT_NB_cleaned,JJC_NB_cleaned,JNA_NB_cleaned,TEC_NB_cleaned,HKG_NB_cleaned,ESK_NB_cleaned,MFM_NB_cleaned,CER_NB_cleaned)
-PB_combined=rbind(WPT_PB_cleaned,JJC_PB_cleaned,JNA_PB_cleaned,TEC_PB_cleaned,HKG_PB_cleaned,ESK_PB_cleaned,MFM_PB_cleaned,CER_PB_cleaned)
-VM_combined=rbind(WPT_VM_cleaned,JJC_VM_cleaned,JNA_VM_cleaned,TEC_VM_cleaned,HKG_VM_cleaned,ESK_VM_cleaned,MFM_VM_cleaned,CER_VM_cleaned)
+NB_combined=rbind(WPT_NB_cleaned,JJC_NB_cleaned,JNA_NB_cleaned,TEC_NB_cleaned,HKG_NB_cleaned,ESK_NB_cleaned,MFM_NB_cleaned,MFM_NB_cleaned2,CER_NB_cleaned)
+PB_combined=rbind(WPT_PB_cleaned,JJC_PB_cleaned,JNA_PB_cleaned,TEC_PB_cleaned,HKG_PB_cleaned,ESK_PB_cleaned,MFM_PB_cleaned,MFM_PB_cleaned2,CER_PB_cleaned)
+VM_combined=rbind(WPT_VM_cleaned,JJC_VM_cleaned,JNA_VM_cleaned,TEC_VM_cleaned,HKG_VM_cleaned,ESK_VM_cleaned,MFM_VM_cleaned,MFM_VM_cleaned2,CER_VM_cleaned)
 
 #_____________________________________________________####
 #4. DATA CLEANING OF WHOLE DATASET                    ####

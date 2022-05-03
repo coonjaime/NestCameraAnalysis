@@ -130,22 +130,22 @@ PB_dips_bySpecies=PB%>%
 #Dipping percentages
 DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=reorder(Species, -mean),y=mean))+
   geom_col(aes(color="black",fill=Species))+
-  scale_x_discrete(labels=c("Eastern\nMeadowlark","Common\nGrackle","Dickcissel","Bobolink","Brown\nThrasher","Gray\nCatbird","Grasshopper\nSparrow","Red-winged\nBlackbird"))+
-  scale_fill_manual(values=c("burlywood1","sienna2","orchid4","gold2","yellow2","gray50","peru","orangered3"))+
+  scale_x_discrete(labels=c("Eastern\nMeadowlark","Common\nGrackle","Dickcissel","Bobolink","Brown\nThrasher","Gray\nCatbird","Field\nSparrow","Grasshopper\nSparrow","Red-winged\nBlackbird"))+
+  scale_fill_manual(values=c("burlywood1","sienna2","orchid4","gold2","yellow2","rosybrown1","gray50","peru","orangered3"))+
   scale_color_manual(values = "black")+
   scale_y_continuous(expand=c(0,0),limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
   geom_text(label = paste("n =",filter(PB_dips_bySpecies,Species!="EAKI")$nSessions), nudge_y=-.04, fontface="bold")+
   labs(y="% of Provisioning with Dipping",x="")+
   theme_bar_noleg()+
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
-DipPercent_bySpecies #Include FISP when ready
+DipPercent_bySpecies
 
 ggsave(DipPercent_bySpecies,filename="DipPercent_by_Species.png",dpi=600,units="in",height=5,width=8)
 
 DipPercent_Flip <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=reorder(Species, mean),y=mean))+
   geom_col(aes(color="black",fill=Species))+
-  scale_x_discrete(labels=c("Red-winged\nBlackbird","Grasshopper\nSparrow","Gray\nCatbird","Brown\nThrasher","Bobolink","Dickcissel","Common\nGrackle","Eastern\nMeadowlark"))+
-  scale_fill_manual(values=c("burlywood1","sienna2","orchid4","gold2","yellow2","gray50","peru","orangered3"))+
+  scale_x_discrete(labels=c("Red-winged\nBlackbird","Grasshopper\nSparrow","Field\nSparrow","Gray\nCatbird","Brown\nThrasher","Bobolink","Dickcissel","Common\nGrackle","Eastern\nMeadowlark"))+
+  scale_fill_manual(values=c("burlywood1","sienna2","orchid4","gold2","yellow2","rosybrown1","gray50","peru","orangered3"))+
   scale_color_manual(values = "black")+
   scale_y_continuous(expand=c(0,0),limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
   geom_text(label = paste("n =",filter(PB_dips_bySpecies,Species!="EAKI")$nSessions), nudge_y=-.05, fontface="bold")+
