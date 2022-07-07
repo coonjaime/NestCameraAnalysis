@@ -1,3 +1,6 @@
+#JJC to do:
+#1 - separate veg by three different scales (within 5 m, within 25 m, and patch-scale)
+
 ###Code Contributors
 #Jaime Coon, coonja@earlham.edu
 #Joshua Angell
@@ -66,7 +69,7 @@ theme_bar_leg <- function () {
 #install.packages('easypackages')#do once to manage packages
 library('easypackages')#load package managing package
 
-packages('ggeffects','tidyverse','ggplot2','ggpubr','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
+packages('TMB','ggeffects','tidyverse','ggplot2','ggpubr','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
 
 #_____________________________________________________####
 ####3. DATA  ####
@@ -180,21 +183,13 @@ OnlyDippersAllowed <- PB%>%
   left_join(PB_Dips_Descr)
 
 
-Dipping_Hist1 <- ggplot(filter(OnlyDippersAllowed,DipsSum>0),aes(x=(DipsSum),fill=Species))+
+Dipping_Hist1 <- ggplot(filter(OnlyDippersAllowed,DipsSum>0),aes(x=DipsSum,fill=Species))+
   geom_histogram()+
   scale_fill_manual(values=c("gold2","orangered3"),labels=c("Dickcissel","Red-winged Blackbird"))+
   scale_y_continuous(limits=c(0,165))+
   labs(x="Number of Dips",y="")+
-  
-  theme_bar_leg()+
-  theme(
-    legend.position="bottom"
-  )
+  theme_bar_leg()
 Dipping_Hist1 
-
-
-ggsave(Dipping_Hist1,filename="DICK_RWBL_Dipping.png",dpi=600,units="in",height=3.5,width=6)
-
 
 Dipping_Hist2 <- ggplot(filter(OnlyDippersAllowed,SessionsSum>0),aes(x=SessionsSum,fill=Species))+
   geom_histogram()+
@@ -207,7 +202,7 @@ Dipping_Hist2
 #Histograms currently do not include 0s to make the plot more readable. We can mess with this/y axis scaling if needed
 DoubleDipping <- ggarrange(Dipping_Hist1,Dipping_Hist2,nrow = 1,labels = "AUTO",common.legend = T,legend="bottom")
 annotate_figure(DoubleDipping,left = text_grob("Frequency",face = "bold",rot = 90,size = 16))%>%
-  ggsave(filename="DoubleDipping.png",dpi=600,units="in",height=3,width=6)
+  ggsave(filename="DoubleDipping.png",dpi=600,units="in",height=5,width=8)
 
 
 #Ethan _____________________________________________________####
