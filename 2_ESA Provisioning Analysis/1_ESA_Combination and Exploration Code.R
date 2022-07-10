@@ -101,8 +101,12 @@ NestlingNums <- read_excel("Data_July2022/NestlingNums.xlsx")%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   select(c(-NestID,-FilmingSession,-Species,-Year,-CanSeeDippingBegging,-Done,-ParentsReturn))
   
-   
-  
+#Arthropod calculations
+Arth <- read_excel("Data_July2022/ArthropodMeasuring_DICKData.xlsx", sheet = 3)
+#Calculating means within each size class. Based on avg female DICK beak length of 16.1mm (Birds of the World)
+mean(filter(Arth, Length_mm <= 16.1)$Length_mm) #7.074
+mean(filter(Arth, Length_mm > 16.1 & Length_mm <= 32.2)$Length_mm) #19.596
+mean(filter(Arth, Length_mm > 32.2)$Length_mm) #61.571
 
 #_____________________________________________________####
 #3. CLEANING & COMBINING DATASETS                      ####
@@ -528,12 +532,12 @@ PB=PB_combined%>%
   mutate(OrdDate=yday(Date))%>%
   mutate_at(vars(Species), ~replace_na(., 'DICK'))%>%
   
-  #Based on avg female DICK beak length of 16.1mm (Birds of the World)
-  mutate(Arthmm = case_when(Species=="DICK" & ArthSize=="Small" ~ 9.05,
-                            Species=="DICK" & ArthSize=="Medium" ~ 24.15,
-                            Species=="DICK" & ArthSize=="Large" ~ 41.1,
+  #Means within each size class. Based on avg female DICK beak length of 16.1mm (Birds of the World)
+  mutate(Arthmm = case_when(Species=="DICK" & ArthSize=="Small" ~ 7.074,
+                            Species=="DICK" & ArthSize=="Medium" ~ 19.596,
+                            Species=="DICK" & ArthSize=="Large" ~ 61.571,
                             
-  #Based on avg female RWBL beak length of 19.3mm (Birds of the World)
+  #Midpoints within each size class. Based on avg female RWBL beak length of 19.3mm (Birds of the World)
   #Check RWBL subspecies and measurements. Pyle has 19.3 at top of range
                             Species=="RWBL" & ArthSize=="Small" ~ 10.65,
                             Species=="RWBL" & ArthSize=="Medium" ~ 28.95,
