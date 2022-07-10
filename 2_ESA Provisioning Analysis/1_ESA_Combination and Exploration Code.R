@@ -1,7 +1,11 @@
 ###JJC To Do:
-  #1- Update Nestling Nums
+  #1- Update Nestling Nums - started
+  #2- Upload Daub, Nestling Condition, Nest Veg, and arth size datasets - done
+  #3- Clean up nest survival/nest visit dataset
+  #4- Check what patch all nests are in on QGIS
+
+#Other:
   #Organize veg data at multiple scales
-  #Clean up nest survival/nest visit dataset
 
 ####Code Contributors
   #Jaime Coon, coonja@earlham.edu
