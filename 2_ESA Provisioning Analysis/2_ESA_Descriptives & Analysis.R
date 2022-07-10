@@ -25,24 +25,24 @@
 ####1. SETUP  ####
 
 #Jaime's computer setup
-#setwd("~/NestCameraAnalysis/1_Initial Exploration")
+#setwd("~/NestCameraAnalysis/2_ESA Provisioning Analysis")
 #feel free to add your own setup if using this code
 
 #Ethan wd
-setwd("~/Desktop/GRGCoding/NestCameraAnalysis/1_Initial Exploration")
+setwd("~/Desktop/GRGCoding/NestCameraAnalysis/2_ESA Provisioning Analysis")
 remove.packages('glmmTMB')
 install.packages('ggeffects')
 install.packages('TMB', type = 'source')
 install.packages('glmmTMB', type = 'source')
 
 #Josh
-setwd("~/RStudio/NestCameraAnalysis/1_Initial Exploration")
+setwd("~/RStudio/NestCameraAnalysis/2_ESA Provisioning Analysis")
 
 #RStudio Cloud setup
-setwd("/cloud/project/1_Initial Exploration")
+setwd("/cloud/project/2_ESA Provisioning Analysis")
 
 #Jaime comp wd
-setwd("~/Dropbox/_Manuscripts/Dipping/NestCameraAnalysis/1_Initial Exploration")
+setwd("~/Dropbox/_Manuscripts/Dipping/NestCameraAnalysis/2_ESA Provisioning Analysis")
 
 #ggplot themes----
 theme_bar_noleg <- function () { 
@@ -88,7 +88,7 @@ load("NB.RData")
 PB_sum_bySession=PB%>%
   #filter(!grepl('TRUE', AbleSeeDipping))%>% 
   #filter(!grepl('0-49', NestVisability))%>% 
-  group_by(Species,NestIDSession,NestID,SessionY,BehaviorCode,FilmDuration, FilmStart)%>%
+  group_by(Species,NestIDSession,NestID,SessionY,BehaviorCode,NestVisability,FilmDuration, FilmStart)%>%
   summarize(BehaviorCount = n())%>%
   mutate(Beh_per_h=BehaviorCount/(FilmDuration))
 
@@ -96,7 +96,7 @@ PB_sum_bySession=PB%>%
 PB_sum_byClip=PB%>%
   #filter(!grepl('TRUE', AbleSeeDipping))%>% 
   #filter(!grepl('0-49', NestVisability))%>% 
-  group_by(Species,VideoClip,NestIDSession,NestID,SessionY,BehaviorCode,FilmDuration,ClipStart)%>%
+  group_by(Species,VideoClip,NestIDSession,NestID,SessionY,BehaviorCode,NestVisability,FilmDuration,ClipStart)%>%
   summarize(BehaviorCount = n())%>%
   mutate(Beh_per_h=BehaviorCount/(FilmDuration))
 
@@ -429,7 +429,7 @@ NestlingDiet=PB%>%
   mutate(percent=count/1065)
 
 #To do: figure out how to extract species and put it in it's own column
-NestChecks=read_csv("Initial Data/NestChecks_2.Mar.2022.csv")%>%
+NestChecks=read_csv("Data_July2022/NestChecks_2.Mar.2022.csv")%>%
   clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   mutate(Date=format(mdy(Date),'%m/%d/%y'))%>%

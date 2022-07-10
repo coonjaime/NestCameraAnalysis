@@ -29,13 +29,13 @@
 setwd("~/Desktop/GRGCoding")
 
 #Josh
-setwd("~/RStudio/NestCameraAnalysis/1_Initial Exploration")
+setwd("~/RStudio/NestCameraAnalysis/2_ESA Provisioning Analysis")
 
 #RStudio Cloud setup
-setwd("/cloud/project/1_Initial Exploration")
+setwd("/cloud/project/2_ESA Provisioning Analysis")
 
 #Jaime comp wd
-setwd("~/Dropbox/_Manuscripts/Dipping/NestCameraAnalysis/1_Initial Exploration")
+setwd("~/Dropbox/_Manuscripts/Dipping/NestCameraAnalysis/2_ESA Provisioning Analysis")
 
 #__1a. PACKAGES                                       ####
 #install.packages('easypackages')#do once to manage packages
@@ -46,7 +46,7 @@ packages('TMB','tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate')
 #_____________________________________________________####
 #2. IMPORTING SEPARATE DATASETS                     ####
 
-veg<-read_csv("Initial Data/NestVeg_2.Mar.2022.csv")%>%  #Check about NAs in dataset
+veg<-read_csv("Data_July2022/NestVeg_2.Mar.2022.csv")%>%  #Check about NAs in dataset
   clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   filter(Year>2014)%>%
@@ -56,44 +56,44 @@ veg<-read_csv("Initial Data/NestVeg_2.Mar.2022.csv")%>%  #Check about NAs in dat
   mutate(Robel=(Robel1+Robel2+Robel3+Robel4)/4)%>%
   summarize_at(vars(Fear, Csg, Wsg, Forb,Legume,Covlit,Robel,LitDepth),mean)
 
-WPT_NB <- read_excel("Initial Data/WPT_Nestling Behavior_4.9.22.xlsx")
-WPT_PB <- read_excel("Initial Data/WPT_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical")) 
-WPT_VM <- read_excel("Initial Data/WPT_Video_Master_4.9.22.xlsx")
+WPT_NB <- read_excel("Data_July2022/WPT_Nestling Behavior_4.9.22.xlsx")
+WPT_PB <- read_excel("Data_July2022/WPT_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical")) 
+WPT_VM <- read_excel("Data_July2022/WPT_Video_Master_4.9.22.xlsx")
 
-JJC_NB <- read_excel("Initial Data/JJC_Nestling Behavior_4.9.22.xlsx")
-JJC_PB <- read_excel("Initial Data/JJC_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-JJC_VM <- read_excel("Initial Data/JJC_Video_Master_4.9.22.xlsx")
+JJC_NB <- read_excel("Data_July2022/JJC_Nestling Behavior_4.9.22.xlsx")
+JJC_PB <- read_excel("Data_July2022/JJC_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+JJC_VM <- read_excel("Data_July2022/JJC_Video_Master_4.9.22.xlsx")
 
-JNA_NB <- read_excel("Initial Data/JNA_Nestling Behavior_4.2.22.xlsx")
-JNA_PB <- read_excel("Initial Data/JNA_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-JNA_VM <- read_excel("Initial Data/JNA_Video_Master_4.2.22.xlsx")
+JNA_NB <- read_excel("Data_July2022/JNA_Nestling Behavior_6.15.22.xlsx")
+JNA_PB <- read_excel("Data_July2022/JNA_Parent Behavior_6.15.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+JNA_VM <- read_excel("Data_July2022/JNA_Video_Master_6.15.22.xlsx")
 
-TEC_NB <- read_excel("Initial Data/TEC_Nestling Behavior_4.2.22.xlsx")
-TEC_PB <- read_excel("Initial Data/TEC_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-TEC_VM <- read_excel("Initial Data/TEC_Video_Master_4.2.22.xlsx")
+TEC_NB <- read_excel("Data_July2022/TEC_Nestling Behavior_4.2.22.xlsx")
+TEC_PB <- read_excel("Data_July2022/TEC_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+TEC_VM <- read_excel("Data_July2022/TEC_Video_Master_4.2.22.xlsx")
 
-HKG_NB <- read_excel("Initial Data/HKG_Nestling Behavior_4.2.22.xlsx")
-HKG_PB <- read_excel("Initial Data/HKG_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-HKG_VM <- read_excel("Initial Data/HKG_Video_Master_4.2.22.xlsx")
+HKG_NB <- read_excel("Data_July2022/HKG_Nestling Behavior_4.2.22.xlsx")
+HKG_PB <- read_excel("Data_July2022/HKG_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+HKG_VM <- read_excel("Data_July2022/HKG_Video_Master_4.2.22.xlsx")
 
-ESK_NB <- read_excel("Initial Data/ESK_Nestling Behavior_4.9.22.xlsx")
-ESK_PB <- read_excel("Initial Data/ESK_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-ESK_VM <- read_excel("Initial Data/ESK_Video_Master_4.9.22.xlsx")
+ESK_NB <- read_excel("Data_July2022/ESK_Nestling Behavior_4.9.22.xlsx")
+ESK_PB <- read_excel("Data_July2022/ESK_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+ESK_VM <- read_excel("Data_July2022/ESK_Video_Master_4.9.22.xlsx")
 
-MFM_NB <- read_excel("Initial Data/MFM_Nestling Behavior_1.2.22.xlsx")
-MFM_PB <- read_excel("Initial Data/MFM_Parent Behavior_1.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-MFM_VM <- read_excel("Initial Data/MFM_Video_Master_1.2.22.xlsx")
+MFM_NB <- read_excel("Data_July2022/MFM_Nestling Behavior_1.2.22.xlsx")
+MFM_PB <- read_excel("Data_July2022/MFM_Parent Behavior_1.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+MFM_VM <- read_excel("Data_July2022/MFM_Video_Master_1.2.22.xlsx")
 
-MFM_NB2 <- read_excel("Initial Data/MFM_Nestling Behavior_9.15.21.xlsx")
-MFM_PB2 <- read_excel("Initial Data/MFM_Parent Behavior_9.15.21.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-MFM_VM2 <- read_excel("Initial Data/MFM_Video_Master_9.15.21.xlsx")
+MFM_NB2 <- read_excel("Data_July2022/MFM_Nestling Behavior_9.15.21.xlsx")
+MFM_PB2 <- read_excel("Data_July2022/MFM_Parent Behavior_9.15.21.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+MFM_VM2 <- read_excel("Data_July2022/MFM_Video_Master_9.15.21.xlsx")
 
-CER_NB <- read_excel("Initial Data/CER_Nestling Behavior_4.2.22.xlsx")
-CER_PB <- read_excel("Initial Data/CER_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-CER_VM <- read_excel("Initial Data/CER_Video_Master_4.2.22.xlsx")
+CER_NB <- read_excel("Data_July2022/CER_Nestling Behavior_4.2.22.xlsx")
+CER_PB <- read_excel("Data_July2022/CER_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+CER_VM <- read_excel("Data_July2022/CER_Video_Master_4.2.22.xlsx")
 
 #Nestling numbers for updated nests as of 1.2.22 #These need to be updated
-NestlingNums <- read_excel("Initial Data/NestlingNums.xlsx")%>%
+NestlingNums <- read_excel("Data_July2022/NestlingNums.xlsx")%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
@@ -421,6 +421,7 @@ VM=VM_combined%>%
   select(c(-Cowbird,-Dickcissel))%>%
   
   add_column("Parasitized"=as.numeric(as.logical(.$NumBHCO)))%>%
+  add_column("propBHCO"=.$NumBHCO/.$TotalNestling)
   
   #filtering out incomplete nests as of 4.9.22: #recheck which nests are incomplete once all datasets are ready
   filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
