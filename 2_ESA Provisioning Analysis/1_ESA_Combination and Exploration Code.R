@@ -50,7 +50,7 @@ packages('TMB','tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate')
 #_____________________________________________________####
 #2. IMPORTING SEPARATE DATASETS                     ####
 
-veg<-read_csv("Data_July2022/NestVeg_2.Mar.2022.csv")%>%  #Check about NAs in dataset
+veg<-read_csv("Data_July2022/NestVeg.csv")[-c(7342),]%>%
   clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   filter(Year>2014)%>%
@@ -96,8 +96,8 @@ CER_NB <- read_excel("Data_July2022/CER_Nestling Behavior_4.2.22.xlsx")
 CER_PB <- read_excel("Data_July2022/CER_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 CER_VM <- read_excel("Data_July2022/CER_Video_Master_4.2.22.xlsx")
 
-#Nestling numbers for updated nests as of 1.2.22 #These need to be updated
-NestlingNums <- read_excel("Data_July2022/NestlingNums.xlsx")%>%
+#Nestling numbers for updated nests as of 7.12.22
+NestlingNums <- read.csv("Data_July2022/NestlingNumsAge.csv")[1:265,1:17]%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[(]",""))%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
@@ -424,12 +424,12 @@ VM=VM_combined%>%
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   mutate(NestIDSession=recode(NestIDSession,'235_EAKI_1_21'="235_EAKI_1_21_1"))%>%
 
-  left_join(NestlingNums,select(NumHosts,NumBHCO),by="NestIDSession")%>%
-  mutate(TotalNestling = as.numeric(NumHosts)+as.numeric(NumBHCO))%>%
+  left_join(NestlingNums,select(XHosts,XBHCO),by="NestIDSession")%>%
+  mutate(TotalNestling = as.numeric(XHosts)+as.numeric(XBHCO))%>%
   select(c(-Cowbird,-Dickcissel))%>%
   
-  add_column("Parasitized"=as.numeric(as.logical(.$NumBHCO)))%>%
-  add_column("propBHCO"=.$NumBHCO/.$TotalNestling)
+  add_column("Parasitized"=as.numeric(as.logical(.$XBHCO)))%>%
+  add_column("propBHCO"=.$XBHCO/.$TotalNestling)%>%
   
   #filtering out incomplete nests as of 4.9.22: #recheck which nests are incomplete once all datasets are ready
   filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
@@ -469,10 +469,11 @@ NB=NB_combined%>%
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   mutate(NestIDSession=recode(NestIDSession,'235_EAKI_1_21'="235_EAKI_1_21_1"))%>%
   
-  left_join(NestlingNums,select(NumHosts,NumBHCO),by="NestIDSession")%>%
-  mutate(TotalNestling = as.numeric(NumHosts)+as.numeric(NumBHCO))%>%
+  left_join(NestlingNums,select(XHosts,XBHCO),by="NestIDSession")%>%
+  mutate(TotalNestling = as.numeric(XHosts)+as.numeric(XBHCO))%>%
   select(c(-Cowbird,-Dickcissel))%>%
-  add_column("Parasitized"=as.numeric(as.logical(.$NumBHCO)))%>%
+  add_column("Parasitized"=as.numeric(as.logical(.$XBHCO)))%>%
+  add_column("propBHCO"=.$XBHCO/.$TotalNestling)%>%
   
   #filtering out incomplete nests as of 4.9.22:  
   filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
@@ -509,10 +510,11 @@ PB=PB_combined%>%
   mutate(NestIDn=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   mutate(NestIDSession=recode(NestIDSession,'235_EAKI_1_21'="235_EAKI_1_21_1"))%>%
   
-  left_join(NestlingNums,select(NumHosts,NumBHCO),by="NestIDSession")%>%
-  mutate(TotalNestling = as.numeric(NumHosts)+as.numeric(NumBHCO))%>%
+  left_join(NestlingNums,select(XHosts,XBHCO),by="NestIDSession")%>%
+  mutate(TotalNestling = as.numeric(XHosts)+as.numeric(XBHCO))%>%
   select(c(-Cowbird,-Dickcissel))%>%
-  add_column("Parasitized"=as.numeric(as.logical(.$NumBHCO)))%>%
+  add_column("Parasitized"=as.numeric(as.logical(.$XBHCO)))%>%
+  add_column("propBHCO"=.$XBHCO/.$TotalNestling)%>%
   
   #filtering out incomplete nests as of 4.9.22:   
   filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
