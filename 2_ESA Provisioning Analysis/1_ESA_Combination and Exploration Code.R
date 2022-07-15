@@ -1,8 +1,12 @@
 ###JJC To Do:
-  #1- Update Nestling Nums - started
+  #1- Update Nestling Nums - done
   #2- Upload Daub, Nestling Condition, Nest Veg, and arth size datasets - done
-  #3- Clean up nest survival/nest visit dataset
-  #4- Check what patch all nests are in on QGIS
+  #3- Clean up nest survival/nest visit dataset 
+  #4- Check what patch all nests are in on QGIS - done
+  #5- outline analyses
+  #6- nestling survival analysis
+  #7- clean Daubenmire data - done (still need to add KLL!)
+  #8- merge all veg data - done
 
 #Other:
   #Organize veg data at multiple scales
@@ -50,15 +54,80 @@ packages('TMB','tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate')
 #_____________________________________________________####
 #2. IMPORTING SEPARATE DATASETS                     ####
 
-veg<-read_csv("Data_July2022/NestVeg.csv")[-c(7342),]%>%
-  clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
+veg_25<-read_csv("Data_July2022/NestVeg.csv")[-c(4904),]%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","CSG","WSG","FEAR"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
-  filter(Year>2014)%>%
+ # filter(Year>2014)%>%
+  filter(grepl('DICK', NestID))%>%
   filter(!(NestID=="RIS_10_10"))%>%
   group_by(NestID)%>%
   mutate(LitDepth=(Litdepth+Litdepth2+Litdepth3)/3)%>%
   mutate(Robel=(Robel1+Robel2+Robel3+Robel4)/4)%>%
-  summarize_at(vars(Fear, Csg, Wsg, Forb,Legume,Covlit,Robel,LitDepth),mean)
+  summarize_at(vars(FEAR, CSG, WSG, Forb,Legume,Covlit,Robel,LitDepth),mean)%>%
+  rename_with(~paste0(., "_25"), FEAR:LitDepth)
+
+save(veg_25,file="veg_25.RData")
+
+veg_5<-read_csv("Data_July2022/NestVeg.csv")[-c(4904),]%>% #Note from JJC - what does 7342 do?
+  clean_names(case = "upper_camel", abbreviations = c("ID","CSG","WSG","FEAR"))%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  filter(grepl('DICK', NestID))%>%
+  filter(!(NestID=="RIS_10_10"))%>%
+  filter(Distance<6)%>%
+  group_by(NestID)%>%
+  mutate(LitDepth=(Litdepth+Litdepth2+Litdepth3)/3)%>%
+  mutate(Robel=(Robel1+Robel2+Robel3+Robel4)/4)%>%
+  summarize_at(vars(FEAR, CSG, WSG, Forb,Legume,Covlit,Robel,LitDepth),mean)%>%
+  rename_with(~paste0(., "_5"), FEAR:LitDepth)
+save(veg_5,file="veg_5.RData")
+
+
+veg_pasture<-read_csv("Data_July2022/DaubData.csv")%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID","CSG","WSG","FEAR"))%>%
+  filter(Year>2014)%>%
+  filter(!(Year=="2017"))%>%
+  filter(!(Year=="2018"))%>%
+  rename(FEAR=Fescue)%>%
+  rename(Covlit=Litter)%>%
+  rename(LitDepth=LitterDepth)%>%
+  rename(Forb=Forbs)%>%
+  rename(Legume=Legumes)%>%
+  select(-c(X28,X29))%>%
+  group_by(PasturePatchYear)%>%
+  mutate(Robel=(RobelN+RobelE+RobelS+RobelW)/4)%>%
+  summarize_at(vars(FEAR, CSG, WSG, Forb,Legume,Covlit,Robel,LitDepth),mean)%>%
+  rename_with(~paste0(., "_Pasture"), FEAR:LitDepth)
+
+save(veg_pasture,file="veg_pasture.RData")
+
+EarlyYearNestInfo=read_csv("Data_July2022/NestMonitoring_2015_2016.csv")%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  group_by(NestID) %>% 
+  filter(row_number()==1)%>%
+  filter(Year>2014)%>%
+  mutate(PasturePatch = str_replace(PasturePatch, "[.]", "_"))%>%
+  unite("PasturePatchYear",c(PasturePatch,Year), sep="_", remove = FALSE)%>%
+  select(c(NestID,Pasture,PasturePatchYear,Year,PasturePatch))
+
+LateYearNestInfo=read_csv("Data_July2022/NestPatches_2021.csv")%>%
+  select(name,Patch,Pasture,Year)%>%
+  rename(NestID=name)%>%
+  rename(PasturePatch=Patch)%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  unite("PasturePatchYear",c(PasturePatch,Year), sep="_", remove = FALSE)
+
+NestInfo_all=rbind(EarlyYearNestInfo,LateYearNestInfo)
+
+Veg_All=NestInfo_all%>%
+  left_join(veg_25,by="NestID")%>%
+  left_join(veg_5,by="NestID")%>%
+  left_join(veg_pasture,by="PasturePatchYear")
+    #lots of NAs- are these the ones we didn't do veg at? maybe need to check datasheets. 
+    #possible some data entry wasn't done
+
+save(Veg_All,file="Merged_Veg_Data.RData")    
+  
 
 WPT_NB <- read_excel("Data_July2022/WPT_Nestling Behavior_4.9.22.xlsx")
 WPT_PB <- read_excel("Data_July2022/WPT_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical")) 
