@@ -58,7 +58,7 @@ veg_25<-read_csv("Data_July2022/NestVeg.csv")[-c(4904),]%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","CSG","WSG","FEAR"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
  # filter(Year>2014)%>%
-  filter(grepl('DICK', NestID))%>%
+ # filter(grepl('DICK', NestID))%>%
   filter(!(NestID=="RIS_10_10"))%>%
   group_by(NestID)%>%
   mutate(LitDepth=(Litdepth+Litdepth2+Litdepth3)/3)%>%
@@ -71,7 +71,7 @@ save(veg_25,file="veg_25.RData")
 veg_5<-read_csv("Data_July2022/NestVeg.csv")[-c(4904),]%>% #Note from JJC - what does 7342 do?
   clean_names(case = "upper_camel", abbreviations = c("ID","CSG","WSG","FEAR"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
-  filter(grepl('DICK', NestID))%>%
+  #filter(grepl('DICK', NestID))%>%
   filter(!(NestID=="RIS_10_10"))%>%
   filter(Distance<6)%>%
   group_by(NestID)%>%
@@ -108,16 +108,20 @@ EarlyYearNestInfo=read_csv("Data_July2022/NestMonitoring_2015_2016.csv")%>%
   filter(Year>2014)%>%
   mutate(PasturePatch = str_replace(PasturePatch, "[.]", "_"))%>%
   unite("PasturePatchYear",c(PasturePatch,Year), sep="_", remove = FALSE)%>%
-  select(c(NestID,Pasture,PasturePatchYear,Year,PasturePatch))
+  select(c(NestID,Pasture,PasturePatchYear,PasturePatch))
 
 LateYearNestInfo=read_csv("Data_July2022/NestPatches_2021.csv")%>%
   select(name,Patch,Pasture,Year)%>%
   rename(NestID=name)%>%
   rename(PasturePatch=Patch)%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
-  unite("PasturePatchYear",c(PasturePatch,Year), sep="_", remove = FALSE)
+  unite("PasturePatchYear",c(PasturePatch,Year), sep="_", remove = FALSE)%>%
+  select(-Year)
 
 NestInfo_all=rbind(EarlyYearNestInfo,LateYearNestInfo)
+names(NestInfo_all)
+
+save(NestInfo_all,file="NestInfo.RData")
 
 Veg_All=NestInfo_all%>%
   left_join(veg_25,by="NestID")%>%
@@ -172,8 +176,10 @@ NestlingNums <- read.csv("Data_July2022/NestlingNumsAge.csv")[1:265,1:17]%>%
   mutate(NestIDSession=str_replace(NestIDSession,"[)]",""))%>%
   mutate(NestIDSession=str_replace_all(NestIDSession,"[ ]","_"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
-  select(c(-NestID,-FilmingSession,-Species,-Year,-CanSeeDippingBegging,-Done,-ParentsReturn))
-  
+  select(c(-Year,-NestID,-Species,-CanSeeDippingBegging,-ParentsReturn,-ReviewerInitials,-NestlingAgeNotes,-Priority,-Comments,-Patch))
+
+save(NestlingNums,file="NestlingNums.RData")  
+
 #Arthropod calculations
 Arth <- read_excel("Data_July2022/ArthropodMeasuring_DICKData.xlsx", sheet = 3)
 #Calculating means within each size class. Based on avg female DICK beak length of 16.1mm (Birds of the World)
@@ -209,7 +215,7 @@ WPT_NB_cleaned=WPT_NB%>%
   add_column("CoderID"="001")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(WPT_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
 
@@ -218,7 +224,7 @@ WPT_PB_cleaned=WPT_PB%>%
   add_column("CoderID"="001")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(WPT_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021))
 
@@ -231,7 +237,6 @@ JJC_VM_cleaned=JJC_VM%>%
          SessionY=Session)%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
-  filter(!(Year==2016))%>%
   filter(!(Year==2017))%>% #One 2016 nest coded as 2017
   filter(!grepl('KLT RWBL 4 21 (1)', NestIDSession))#duplicate 
 
@@ -242,9 +247,8 @@ JJC_NB_cleaned=JJC_NB%>%
   add_column("CoderID"="002")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JJC_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
     by="NestIDSession")%>%
-  filter(!(Year==2016))%>%
   filter(!grepl('KLT RWBL 4 21 (1)', NestIDSession)) #duplicate
 
 JJC_PB_cleaned=JJC_PB%>%
@@ -252,9 +256,8 @@ JJC_PB_cleaned=JJC_PB%>%
   add_column("CoderID"="002")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JJC_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
-  filter(!(Year==2016))%>%
   filter(!grepl('KLT RWBL 4 21 (1)', NestIDSession)) #duplicate
 
 #JOSH
@@ -273,7 +276,7 @@ JNA_NB_cleaned=JNA_NB%>%
   add_column("CoderID"="003")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JNA_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
   
@@ -282,7 +285,7 @@ JNA_PB_cleaned=JNA_PB%>%
   add_column("CoderID"="003")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(JNA_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021))
 
@@ -302,7 +305,7 @@ TEC_NB_cleaned=TEC_NB%>%
   add_column("CoderID"="004")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(TEC_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
 
@@ -311,7 +314,7 @@ TEC_PB_cleaned=TEC_PB%>%
   add_column("CoderID"="004")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(TEC_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021))
 
@@ -331,7 +334,7 @@ HKG_NB_cleaned=HKG_NB%>%
   add_column("CoderID"="005")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(HKG_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
 
@@ -340,7 +343,7 @@ HKG_PB_cleaned=HKG_PB%>%
   add_column("CoderID"="005")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(HKG_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021))
 
@@ -354,12 +357,13 @@ ESK_VM_cleaned=ESK_VM%>%
   mutate(Date=format(as.Date(Date),format="%Y-%m-%d"))%>%
   mutate("Year"=(year(Date)))%>%
   filter(!(Year<2021))
+
 ESK_NB_cleaned=ESK_NB%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","BHCO"))%>%
   add_column("CoderID"="006")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(ESK_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
 
@@ -368,7 +372,7 @@ ESK_PB_cleaned=ESK_PB%>%
   add_column("CoderID"="006")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(ESK_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021))
 
@@ -388,7 +392,7 @@ MFM_NB_cleaned=MFM_NB%>%
   add_column("CoderID"="007")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(MFM_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
   
@@ -397,7 +401,7 @@ MFM_PB_cleaned=MFM_PB%>%
   add_column("CoderID"="007")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(MFM_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
 
@@ -420,7 +424,7 @@ MFM_NB_cleaned2=MFM_NB2%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   mutate(NestIDSession=recode(NestIDSession,"BSH FISP 1 21(1)"="BSH FISP 1 21 (1)")) %>%
   left_join(MFM_VM_cleaned2,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
 
@@ -430,7 +434,7 @@ MFM_PB_cleaned2=MFM_PB2%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   mutate(NestIDSession=recode(NestIDSession,"BSH FISP 1 21(1)"="BSH FISP 1 21 (1)")) %>%
   left_join(MFM_VM_cleaned2,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
 
@@ -451,7 +455,7 @@ CER_NB_cleaned=CER_NB%>%
   add_column("CoderID"="008")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(CER_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling,VideoClip),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
 
@@ -460,7 +464,7 @@ CER_PB_cleaned=CER_PB%>%
   add_column("CoderID"="008")%>%
   unite("BehaviorID",c("BehaviorID","CoderID"),remove=TRUE,sep="_")%>%
   left_join(CER_VM_cleaned,select(
-    Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
+    NestID,Year, NestVisablity,FilmStartTime,FilmEndTime,NumHosts,NumBHCO,TotalNestling),
     by="NestIDSession")%>%
   filter(!(Year<2021)) 
   
@@ -493,12 +497,12 @@ VM=VM_combined%>%
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   mutate(NestIDSession=recode(NestIDSession,'235_EAKI_1_21'="235_EAKI_1_21_1"))%>%
 
-  left_join(NestlingNums,select(XHosts,XBHCO),by="NestIDSession")%>%
-  mutate(TotalNestling = as.numeric(XHosts)+as.numeric(XBHCO))%>%
-  select(c(-Cowbird,-Dickcissel))%>%
+  # left_join(NestlingNums,select(XHosts,XBHCO),by="NestIDSession")%>%
+  # mutate(TotalNestling = as.numeric(XHosts)+as.numeric(XBHCO))%>%
+  select(c(-Cowbird,-Dickcissel,-TotalNestling))%>%
   
-  add_column("Parasitized"=as.numeric(as.logical(.$XBHCO)))%>%
-  add_column("propBHCO"=.$XBHCO/.$TotalNestling)%>%
+  # add_column("Parasitized"=as.numeric(as.logical(.$XBHCO)))%>%
+  # d_column("propBHCO"=.$XBHCO/.$TotalNestling)%>%
   
   #filtering out incomplete nests as of 4.9.22: #recheck which nests are incomplete once all datasets are ready
   filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
@@ -518,8 +522,6 @@ VM=VM_combined%>%
   mutate(OrdDate=yday(Date))%>%
   mutate_at(vars(Species), ~replace_na(., 'DICK'))
 
-summary(as.factor(VM$TotalNestling))
-
 
 NB=NB_combined%>%
   filter(!grepl('0', VideoClip))%>%
@@ -538,11 +540,31 @@ NB=NB_combined%>%
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   mutate(NestIDSession=recode(NestIDSession,'235_EAKI_1_21'="235_EAKI_1_21_1"))%>%
   
-  left_join(NestlingNums,select(XHosts,XBHCO),by="NestIDSession")%>%
+  left_join(NestlingNums,select(XHosts,XBHCO,AvgAgeDays),by="NestIDSession")%>%
   mutate(TotalNestling = as.numeric(XHosts)+as.numeric(XBHCO))%>%
   select(c(-Cowbird,-Dickcissel))%>%
   add_column("Parasitized"=as.numeric(as.logical(.$XBHCO)))%>%
   add_column("propBHCO"=.$XBHCO/.$TotalNestling)%>%
+  
+  #Behavior Durations
+  separate(StartTime,sep=":",into=c("StartMinute","StartSecond"))%>%
+  separate(EndTime,sep=":",into=c("EndMinute","EndSecond"))%>%
+  mutate(StartMinute=as.numeric(StartMinute))%>%
+  mutate(StartSecond=as.numeric(StartSecond))%>%
+  mutate(EndMinute=as.numeric(EndMinute))%>%
+  mutate(EndSecond=as.numeric(EndSecond))%>%
+  
+  mutate(Duration_Sec=(EndMinute*60+EndSecond)-(StartMinute*60+StartSecond))%>%
+  
+  #Getting times in the right formats
+  mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M:%S'))%>%
+  mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M:%S'))%>%
+  mutate(FilmEnd=(hour(hms(FilmEndTime)))+(minute(hms(FilmEndTime))/60))%>%
+  mutate(FilmStart=(hour(hms(FilmStartTime)))+(minute(hms(FilmStartTime))/60))%>%
+  mutate(FilmDuration=FilmEnd-FilmStart)%>%
+  mutate(ClipStart=FilmStart+(VideoClip-1)*(20/60))%>%
+  mutate(BehaviorStart=ClipStart+(StartMinute/60))%>%
+  filter(FilmDuration > .5)%>% #in hours
   
   #filtering out incomplete nests as of 4.9.22:  
   filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
@@ -555,15 +577,13 @@ NB=NB_combined%>%
                                '100% - 85%'="85-100",
                                '49% - 0%'="0-49",
                                '84% - 50%'="50-84"))%>%
-  mutate(OrdDate=yday(Date))%>%
-  mutate(BStart=StartMinute*60+ StartSecond)%>%
-  mutate(BEnd  =  EndMinute*60+ EndSecond)%>%
-  mutate(Duration_Sec=BEnd-BStart)%>%
-  mutate_at(vars(Species), ~replace_na(., 'DICK'))
-
+  mutate(OrdDate=yday(Date))
+  #mutate_at(vars(Species), ~replace_na(., 'DICK'))
 names(PB_combined)
 
 PB=PB_combined%>%
+  select(-Comments.x,-ArthLength,-BeakLength,-Screenshot,-Comments.y,-Cowbird,-Dickcissel,
+         -TotalNestling,-NestlingAgeDays,-StartMinute,-StartSecond,-EndMinute,-EndSecond)%>%
   filter(!grepl('0', VideoClip))%>%
   filter(!grepl('Unknown', BehaviorCode))%>%
   filter(!grepl('PTER', NestIDSession))%>%
@@ -576,14 +596,8 @@ PB=PB_combined%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   
   mutate(NestIDSession=recode(NestIDSession,'KLN_DICK_1_21_1'="KLN_DICK_1_15_1"))%>% #fixing JJC mistype
-  mutate(NestIDn=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
+  mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   mutate(NestIDSession=recode(NestIDSession,'235_EAKI_1_21'="235_EAKI_1_21_1"))%>%
-  
-  left_join(NestlingNums,select(XHosts,XBHCO),by="NestIDSession")%>%
-  mutate(TotalNestling = as.numeric(XHosts)+as.numeric(XBHCO))%>%
-  select(c(-Cowbird,-Dickcissel))%>%
-  add_column("Parasitized"=as.numeric(as.logical(.$XBHCO)))%>%
-  add_column("propBHCO"=.$XBHCO/.$TotalNestling)%>%
   
   #filtering out incomplete nests as of 4.9.22:   
   filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
@@ -596,6 +610,18 @@ PB=PB_combined%>%
                                '100% - 85%'="85-100",
                                '49% - 0%'="0-49",
                                '84% - 50%'="50-84"))%>%
+  
+  #Behavior Durations
+  separate(StartTime,sep=":",into=c("StartMinute","StartSecond"))%>%
+  separate(EndTime,sep=":",into=c("EndMinute","EndSecond"))%>%
+  mutate(StartMinute=as.numeric(StartMinute))%>%
+  mutate(StartSecond=as.numeric(StartSecond))%>%
+  mutate(EndMinute=as.numeric(EndMinute))%>%
+  mutate(EndSecond=as.numeric(EndSecond))%>%
+  
+  mutate(Duration_Sec=(EndMinute*60+EndSecond)-(StartMinute*60+StartSecond))%>%
+  
+  #Getting times in the right formats
   mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M:%S'))%>%
   mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M:%S'))%>%
   mutate(FilmEnd=(hour(hms(FilmEndTime)))+(minute(hms(FilmEndTime))/60))%>%
@@ -604,6 +630,8 @@ PB=PB_combined%>%
   mutate(ClipStart=FilmStart+(VideoClip-1)*(20/60))%>%
   mutate(BehaviorStart=ClipStart+(StartMinute/60))%>%
   filter(FilmDuration > .5)%>%
+  
+  #
   mutate(OrdDate=yday(Date))%>%
   mutate_at(vars(Species), ~replace_na(., 'DICK'))%>%
   
@@ -617,11 +645,14 @@ PB=PB_combined%>%
                             Species=="RWBL" & ArthSize=="Small" ~ 10.65,
                             Species=="RWBL" & ArthSize=="Medium" ~ 28.95,
                             Species=="RWBL" & ArthSize=="Large" ~ 44.1,
-                            TRUE ~ NA_real_))
+                            TRUE ~ NA_real_))%>%
+  left_join(Veg_All,by="NestID")%>%
+  left_join(NestlingNums,by="NestIDSession")%>%
+  mutate(TotalNestling = as.numeric(.$XHosts)+as.numeric(.$XBHCO))%>%
+  add_column("Parasitized"=as.numeric(as.logical(.$XBHCO)))%>%
+  add_column("propBHCO"=.$XBHCO/.$TotalNestling)
+  
   
 save(VM,file="VM.RData")
 save(PB,file="PB.RData")
 save(NB,file="NB.RData")
-
-
-

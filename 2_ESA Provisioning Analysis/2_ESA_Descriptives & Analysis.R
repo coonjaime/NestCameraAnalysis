@@ -64,396 +64,266 @@ theme_bar_leg <- function () {
         legend.position="right",
         legend.text=element_text(size=10, color="black"))}
 
-#_____________________________________________________####
-####2. PACKAGES                                       ####
 #install.packages('easypackages')#do once to manage packages
 library('easypackages')#load package managing package
 
-packages('TMB','ggeffects','tidyverse','ggplot2','ggpubr','glmmTMB','readxl','janitor','lubridate','stringr','reshape2')
+packages('TMB','ggeffects','tidyverse','ggplot2','ggpubr','glmmTMB','readxl','janitor','lubridate','stringr','reshape2', 'AICcmodavg')
 
 #_____________________________________________________####
-####3. DATA  ####
+####2. DATA  ####
 
 load("VM.RData")
 load("PB.RData")
 load("NB.RData")
-
-#_____________________________________________________####
-####4. Descriptive Data ####
-
-
-#Parent behavior rates
+load("Merged_Veg_Data.RData")
 
 #calculating behavior rates per hour by the session
-PB_sum_bySession=PB%>%
+ProvDataSession=PB%>%
   #filter(!grepl('TRUE', AbleSeeDipping))%>% 
   #filter(!grepl('0-49', NestVisability))%>% 
-  group_by(Species,NestIDSession,NestID,SessionY,BehaviorCode,NestVisability,FilmDuration, FilmStart)%>%
+  group_by(Species,NestIDSession,NestID,Session,BehaviorCode,NestVisability,FilmDuration,Year, FilmStart,
+           Pasture,PasturePatch,PasturePatchYear, OrdDate,
+           XBHCO,XHosts,propBHCO,TotalNestling,AvgAgeDays,Parasitized,
+           FEAR_5,FEAR_25,FEAR_Pasture,
+           WSG_5,WSG_25,WSG_Pasture,
+           CSG_5,CSG_25,CSG_Pasture,
+           Covlit_5,Covlit_25,Covlit_Pasture,
+           LitDepth_5,LitDepth_25,LitDepth_Pasture,
+           Forb_5,Forb_25,Forb_Pasture,
+           Robel_5,Robel_25,Robel_Pasture)%>%
   summarize(BehaviorCount = n())%>%
-  mutate(Beh_per_h=BehaviorCount/(FilmDuration))
+  mutate(Beh_per_h=BehaviorCount/(FilmDuration))%>%
+  filter(BehaviorCode=="Provisioning")%>%
+  filter(Species=="DICK")
+
 
 ##calculating behavior rates per hour by the clip
-PB_sum_byClip=PB%>%
+ProvDataClip=PB%>%
+  filter(!(StartMinute>30))%>% #filtering out any weird data
   #filter(!grepl('TRUE', AbleSeeDipping))%>% 
   #filter(!grepl('0-49', NestVisability))%>% 
-  group_by(Species,VideoClip,NestIDSession,NestID,SessionY,BehaviorCode,NestVisability,FilmDuration,ClipStart)%>%
-  summarize(BehaviorCount = n())%>%
-  mutate(Beh_per_h=BehaviorCount/(FilmDuration))
-
-#calculating the percent of visible feeding attempts had dips by session
-PB_dips_bySession=PB%>%
-  filter(!grepl(FALSE, AbleSeeDipping),na.rm=TRUE)%>%
-  filter(grepl("Provisioning", BehaviorCode),na.rm=TRUE)%>% 
-  #filter(!grepl('0-49', NestVisability))%>% 
-  group_by(Species,NestIDSession,NestID,SessionY,FilmDuration)%>%
-  summarize(
-    nDips=n(),
-    sumDips = sum(DippingPresent))%>%
-  mutate(PercentDips=sumDips/nDips)
-
-#calculating the percent of visible feeding attempts had dips by species
-PB_dips_bySpecies=PB%>%
-  filter(!grepl(FALSE, AbleSeeDipping),na.rm=TRUE)%>%
-  filter(grepl("Provisioning", BehaviorCode),na.rm=TRUE)%>% 
-  #filter(!grepl('0-49', NestVisability))%>% 
-  group_by(Species,NestIDSession,NestID,SessionY,FilmDuration)%>%
-  summarize(
-    nDips=n(),
-    sumDips = sum(DippingPresent))%>%
-  mutate(PercentDips=sumDips/nDips)%>%
-  group_by(Species)%>%
-  summarize(
-    nSessions=n(),
-    mean=mean(PercentDips))
-
-
-#_____________________________________________________####
-####4. Descriptive Data ####
-
-#Dipping percentages
-DipPercent_bySpecies <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=reorder(Species, -mean),y=mean))+
-  geom_col(aes(color="black",fill=Species))+
-  scale_x_discrete(labels=c("Eastern\nMeadowlark","Common\nGrackle","Dickcissel","Bobolink","Brown\nThrasher","Gray\nCatbird","Field\nSparrow","Grasshopper\nSparrow","Red-winged\nBlackbird"))+
-  scale_fill_manual(values=c("burlywood1","sienna2","orchid4","gold2","yellow2","rosybrown1","gray50","peru","orangered3"))+
-  scale_color_manual(values = "black")+
-  scale_y_continuous(expand=c(0,0),limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
-  geom_text(label = paste("n =",filter(PB_dips_bySpecies,Species!="EAKI")$nSessions), nudge_y=-.04, fontface="bold")+
-  labs(y="% of Provisioning with Dipping",x="")+
-  theme_bar_noleg()+
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
-DipPercent_bySpecies
-
-ggsave(DipPercent_bySpecies,filename="DipPercent_by_Species.png",dpi=600,units="in",height=5,width=8)
-
-DipPercent_Flip <- ggplot(filter(PB_dips_bySpecies,Species!="EAKI"),aes(x=reorder(Species, mean),y=mean))+
-  geom_col(aes(color="black",fill=Species))+
-  scale_x_discrete(labels=c("Red-winged\nBlackbird","Grasshopper\nSparrow","Field\nSparrow","Gray\nCatbird","Brown\nThrasher","Bobolink","Dickcissel","Common\nGrackle","Eastern\nMeadowlark"))+
-  scale_fill_manual(values=c("burlywood1","sienna2","orchid4","gold2","yellow2","rosybrown1","gray50","peru","orangered3"))+
-  scale_color_manual(values = "black")+
-  scale_y_continuous(expand=c(0,0),limits = 0:1,labels = c("0%","25%","50%","75%","100%"))+
-  geom_text(label = paste("n =",filter(PB_dips_bySpecies,Species!="EAKI")$nSessions), nudge_y=-.05, fontface="bold")+
-  labs(y="% of Provisioning with Dipping",x="")+
-  coord_flip()+
-  theme_bar_noleg()
-DipPercent_Flip #Include FISP when ready
-
-ggsave(DipPercent_Flip,filename="DipPercent_Flip.png",dpi=600,units="in",height=5,width=8)
-
-#gift for Josh -I think this could be used to create your boxplot!
-PB_Dips_Descr=PB%>%
-  filter(BehaviorCode=="Provisioning")%>%
-  filter(Species=="DICK"|Species=="RWBL")%>%
-  group_by(NestIDSession)%>%
-  mutate(DipsSum = rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,
-                                 BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T))%>%
-  mutate(DipsSumPerChick = rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,
-                                         BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T)/TotalNestling)%>%
-  mutate(SessionsSum = rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,
-                                     BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T))%>%
-  mutate(SessionsSumPerChick = rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,
-                                             BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T)/TotalNestling)
-#Rows 294:302 have NAs for TotalNestling var, so PerChick variables not working
-
-
-OnlyDippersAllowed <- PB%>%
-  filter(BehaviorCode=="Provisioning")%>%
-  filter(Species=="DICK"|Species=="RWBL")%>%
-  filter(DippingPresent==T)%>%
-  .[!duplicated(.$NestID),60]%>%
-  left_join(PB_Dips_Descr)
-
-
-Dipping_Hist1 <- ggplot(filter(OnlyDippersAllowed,DipsSum>0),aes(x=DipsSum,fill=Species))+
-  geom_histogram()+
-  scale_fill_manual(values=c("gold2","orangered3"),labels=c("Dickcissel","Red-winged Blackbird"))+
-  scale_y_continuous(limits=c(0,165))+
-  labs(x="Number of Dips",y="")+
-  theme_bar_leg()
-Dipping_Hist1 
-
-Dipping_Hist2 <- ggplot(filter(OnlyDippersAllowed,SessionsSum>0),aes(x=SessionsSum,fill=Species))+
-  geom_histogram()+
-  scale_fill_manual(values=c("gold2","orangered3"),labels=c("Dickcissel","Red-winged Blackbird"))+
-  scale_y_continuous(limits = c(0,165))+
-  labs(x="Number of Dipping Sessions",y="")+
-  theme_bar_leg()
-Dipping_Hist2
-
-#Histograms currently do not include 0s to make the plot more readable. We can mess with this/y axis scaling if needed
-DoubleDipping <- ggarrange(Dipping_Hist1,Dipping_Hist2,nrow = 1,labels = "AUTO",common.legend = T,legend="bottom")
-annotate_figure(DoubleDipping,left = text_grob("Frequency",face = "bold",rot = 90,size = 16))%>%
-  ggsave(filename="DoubleDipping.png",dpi=600,units="in",height=5,width=8)
-
-
-#Ethan _____________________________________________________####
-####5. Analysis for Epic Expo - DICK ####
-
-#Calculating Dips Per Chick Per Prov
-
-#Note: I think dips per chick probably makes the most sense? open to other thoughts. 
-
-#Hyp1 - satiation ####
-
-## Make it long
-Dips_By_Chick=PB%>%
+  group_by(Species,VideoClip, NestIDSession,NestID,SessionY,BehaviorCode,NestVisability,FilmDuration,Year, ClipStart,
+           FilmStart,Pasture,PasturePatch,PasturePatchYear,OrdDate,
+           XBHCO,XHosts,propBHCO,TotalNestling,AvgAgeDays,Parasitized,
+           FEAR_5,FEAR_25,FEAR_Pasture,
+           WSG_5,WSG_25,WSG_Pasture,
+           CSG_5,CSG_25,CSG_Pasture,
+           Covlit_5,Covlit_25,Covlit_Pasture,
+           LitDepth_5,LitDepth_25,LitDepth_Pasture,
+           Forb_5,Forb_25,Forb_Pasture,
+           Robel_5,Robel_25,Robel_Pasture)%>%  summarize(BehaviorCount = n())%>%
+  mutate(Beh_per_h=BehaviorCount/(FilmDuration))%>%
   filter(BehaviorCode=="Provisioning")%>%
   filter(Species=="DICK")%>%
-  filter(AbleSeeDipping=TRUE)%>%
-  select(c(NestIDSession,BehaviorStart,BehaviorID,HostDipsA:BHCODipsF))%>%
-  melt(id.vars = c("NestIDSession", "BehaviorID","BehaviorStart"))%>%
-  mutate(Chick_Letter=str_sub(variable, start= -1))%>%
-  mutate(Chick_Sp=str_sub(variable,-9,-6))%>%
-  unite("Chick_ID",c("NestIDSession","Chick_Sp","Chick_Letter"), sep= "_",remove = FALSE)%>%
-  unite("Chick_Beh_ID",c("Chick_ID","BehaviorID"), sep= "_",remove = FALSE)%>%
-  select(Chick_ID,Chick_Beh_ID,NestIDSession,BehaviorID,value,Chick_Sp)%>%
-  rename("NumDips"="value")
-
-Fed_By_Chick=PB%>%
-  filter(BehaviorCode=="Provisioning")%>%
-  filter(Species=="DICK")%>%
-  filter(AbleSeeDipping=TRUE)%>%
-  select(c(NestIDSession,BehaviorID,HostFedA:BHCOFedF,
-           ArthID,ArthSize,Arthmm,BehaviorStart,
-           NestlingAgeDays.y,Parasitized,TotalNestling,NumBHCO,NumHosts))%>%
-  melt(id.vars = c("NestIDSession", "BehaviorID","BehaviorStart",
-                   "ArthID","ArthSize","Arthmm",
-                   "NestlingAgeDays.y","Parasitized","TotalNestling","NumBHCO",'NumHosts'))%>%
-  mutate(Chick_Letter=str_sub(variable, start= -1))%>%
-  mutate(Chick_Sp=str_sub(variable,-8,-5))%>%
-  unite("Chick_ID",c("NestIDSession","Chick_Sp","Chick_Letter"), sep= "_",remove = FALSE)%>%
-  unite("Chick_Beh_ID",c("Chick_ID","BehaviorID"), sep= "_",remove = FALSE)%>%
-  select(Chick_Beh_ID,BehaviorStart,value,ArthSize,
-         Arthmm,BehaviorStart,NestlingAgeDays.y,Parasitized,TotalNestling,NumBHCO,NumHosts)%>%
-  rename("Fed"="value",
-         "NestlingAgeDays"="NestlingAgeDays.y")
-
-ChickData=Dips_By_Chick%>%
-  left_join(Fed_By_Chick,by="Chick_Beh_ID",na.rm=TRUE)%>% 
-  relocate(Fed, .after = NumHosts)
-
-last_event_index=cumsum(ChickData$Fed)+1
-last_event_index=c(1,last_event_index[1:length(last_event_index)-1])
-last_event_time=c(as.numeric(NA),ChickData[which(ChickData$Fed==1),"BehaviorStart"])[last_event_index]
-
-#Time-Since-Fed
-ChickData$TSF=ChickData$BehaviorStart-last_event_time
-
-
-
-
-
-#Hyp2 - arthropod size ####
-    #DipsSumPerChick =  ArthID  + (1|NestID)
-    #DipsSumPerChick = ArthSize + (1|NestID)
-    #DipsSumPerChick = Arthmm   + (1|NestID)
-    #DippingPresent =  ArthID  + (1|NestID)
-    #DippingPresent = ArthSize + (1|NestID)
-    #DippingPresent = Arthmm   + (1|NestID)
-
-PB_Dips=PB%>%
-  filter(BehaviorCode=="Provisioning")%>%
-  filter(Species=="DICK")%>%
-  group_by(NestIDSession)%>%
-  mutate(DipsSum =  rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T))%>%
-  mutate(DipsSumPerChick = rowSums(cbind(HostDipsA,HostDipsB,HostDipsC,HostDipsE,HostDipsF,BHCODipsA,BHCODipsB,BHCODipsC,BHCODipsD,BHCODipsF), na.rm = T)/TotalNestling)%>%
-  mutate(SessionsSum =  rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T))%>%
-  mutate(SessionsSumPerChick =  rowSums(cbind(HostSessionsA,HostSessionsB,HostSessionsC,HostSessionsE,HostSessionsF,BHCOSessionsA,BHCOSessionsB,BHCOSessionsC,BHCOSessionsD,BHCOSessionsF), na.rm = T)/TotalNestling)
-
-
-
-PB_Dips_ArthSize=PB_Dips%>%
-  filter(!(ArthSize=="Unknown"))
-
-PB_Dips_ArthID=PB_Dips%>%
-  filter(!(ArthID=="Unknown"))
-
-#template
-DipsPerChick_ArthSize=glmmTMB(DipsSumPerChick ~ ArthSize + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
-summary(DipsPerChick_ArthSize)
-DipsPerChick_ArthSize
-
-#DipsSumPerChick =  ArthID  + (1|NestID)
-DipsPerChick_ArthID=glmmTMB(DipsSumPerChick ~ ArthID + (1|NestID),family="gaussian",data=PB_Dips_ArthID)
-summary(DipsPerChick_ArthID)
-
-#DipsSumPerChick = ArthSize + (1|NestID)
-DipsPerChick_ArthSize=glmmTMB(as.numeric(DipsSumPerChick) ~ ArthSize + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
-summary(DipsPerChick_ArthSize)
-
-DipsPerChick_ArthSize_Pred = as.data.frame(ggpredict(DipsPerChick_ArthSize,c("ArthSize"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
-colnames(DipsPerChick_ArthSize_Pred)=c("ArthSize", "Predicted","SE","Lower","Upper", "group") #renames columns
-print(DipsPerChick_ArthSize_Pred) 
-
-dodge=position_dodge(.9)
-DipsPerChick_ArthSize_Plot=ggplot(data=DipsPerChick_ArthSize_Pred, aes(y=Predicted, x=ArthSize,fill=ArthSize))+  
-  geom_bar(aes(y=Predicted, x=ArthSize),position=dodge, stat="identity")+
-  scale_fill_manual(values=c("goldenrod","brown","darkgreen"))+
-  #scale_x_discrete(labels=c("",""))+
-  scale_y_continuous(expand = c(0, 0)) +
-  geom_errorbar(aes(x = ArthSize, ymin = Lower, ymax = Upper),position = dodge, width = 0.2)+
-  labs(y = "Dips/Chick", x="Arthropod Size")+
-  theme(legend.title=element_blank())+
-  theme_bar_leg()
-DipsPerChick_ArthSize_Plot
-
-#DipsSumPerChick = Arthmm   + (1|NestID)
-DipsPerChick_Arthmm=glmmTMB(DipsSumPerChick ~ Arthmm + (1|NestID),family="gaussian",data=PB_Dips_ArthSize)
-summary(DipsPerChick_Arthmm)
-
-#DippingPresent =  ArthID  + (1|NestID)
-DipsPresent_ArthID=glmmTMB(DippingPresent ~ ArthID + (1|NestID),family="binomial",data=PB_Dips_ArthID)
-summary(DipsPresent_ArthID)
-
-#DippingPresent = ArthSize + (1|NestID)
-DipsPresent_ArthSize=glmmTMB(as.numeric(DippingPresent) ~ ArthSize + (1|NestID),family="binomial",data=PB_Dips_ArthSize)
-summary(DipsPresent_ArthSize)
-
-DipsPresent_ArthSize_Pred = as.data.frame(ggpredict(DipsPresent_ArthSize,c("ArthSize"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
-colnames(DipsPresent_ArthSize_Pred)=c("ArthSize", "Predicted","SE","Lower","Upper", "group") #renames columns
-print(DipsPresent_ArthSize_Pred) 
-
-dodge=position_dodge(.9)
-DipsPresent_ArthSize_Plot=ggplot(data=DipsPresent_ArthSize_Pred, aes(y=Predicted, x=ArthSize,fill=ArthSize))+  
-  geom_bar(aes(y=Predicted, x=ArthSize),position=dodge, stat="identity")+
-  scale_fill_manual(values=c("goldenrod","brown", "darkgreen"))+
-  scale_x_discrete(labels=c("Small","Medium", "Large"))+
-  scale_y_continuous(expand = c(0, 0)) +
-  geom_errorbar(aes(x = ArthSize, ymin = Lower, ymax = Upper),position = dodge, width = 0.2)+
-  labs(y = "Dipping Present", x="Arthropod Size")+
-  theme(legend.title=element_blank())+
-  theme_bar_leg()
-DipsPresent_ArthSize_Plot
-
-#DippingPresent = Arthmm   + (1|NestID)
-DipsPresent_Arthmm=glmmTMB(DippingPresent ~ Arthmm + (1|NestID),family="binomial",data=PB_Dips_ArthSize)
-summary(DipsPresent_Arthmm)
-
-
-#########Hyp3 - cowbird presence##########################################################
-
-      #DippingPresent = NumBHCO   + (1|NestID) (family would need to be binomial)
-      #DippingPresent = Parasitized + (1|NestID)
-      #DipsSumPerChick =  NumBHCO  + (1|NestID)
-      #DipsSumPerChick = Parasitized + (1|NestID)
-
-#DippingPresent = NumBHCO   + (1|NestID) (family would need to be binomial)
-DipsPresent_BHCONum=glmmTMB(DippingPresent ~ NumBHCO + (1|NestID),family="binomial", data=PB_Dips)
-summary(DipsPresent_BHCONum)
-
-#DippingPresent = Parasitized + (1|NestID)
-DipsPresent_Parasite=glmmTMB(DippingPresent ~ Parasitized + (1|NestID),family="binomial", data=PB_Dips)
-summary(DipsPresent_Parasite)
-
-DipsPresent_Parasite_Pred = as.factor(ggpredict(DipsPresent_Parasite,c("Parasitized"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)) 
-colnames(DipsPresent_Parasite_Pred)=c("Parasitized", "Predicted","SE","Lower","Upper","group") #renames columns
-print(DipsPresent_Parasite_Pred) 
-
-dodge=position_dodge(.9)
-DipsPerChick_Parasite_Plot=ggplot(data=DipsPerChick_Parasite_Pred, aes(y=Predicted, x=as.factor(Parasitized),fill=as.factor(Parasitized)))+  
-  geom_bar(aes(y=Predicted, x=as.factor(Parasitized)),position=dodge, stat="identity")+
-  scale_fill_manual(values=c("darkorange4","gray20"))+
-  scale_x_discrete(labels=c("No","Yes"))+
-  scale_y_continuous(expand = c(0, 0)) +
-  geom_errorbar(aes(x = as.factor(Parasitized), ymin = Lower, ymax = Upper),position = dodge, width = 0.2)+
-  labs(y = "Dipping Present", x="Parasitized")+
-  theme(legend.title=element_blank())+
-  theme_bar_noleg()
-DipsPerChick_Parasite_Plot
-
-#DipsSumPerChick =  NumBHCO  + (1|NestID)
-DipsPerChick_BHCONum=glmmTMB(DipsSumPerChick ~ NumBHCO + (1|NestID),family="gaussian", data=PB_Dips)
-summary(DipsPerChick_BHCONum)
-
-#DipsSumPerChick = Parasitized + (1|NestID)
-DipsPerChick_Parasite=glmmTMB(as.numeric(DipsSumPerChick) ~ as.factor(Parasitized) + (1|NestID),family="gaussian", data=PB_Dips)
-summary(DipsPerChick_Parasite)
-
-#_____________________________________________________####
-####8. Prelim analysis for ESA ####
-
-#Provisioning and tall fescue
-
-#add nest ID column from VM to PB
-
-ProvData=PB_sum_byClip%>%
-  filter(grepl('Arrive at Nest',BehaviorCode))%>%
-  left_join(veg,by="NestID")%>%
-  left_join(VM,select(NumHosts,NumBHCO),by="NestID")%>%
   filter(TotalNestling>0)
 
-length(unique(ProvData$NestID))
-names(ProvData)
-
-Model1=glmmTMB(Beh_per_h~NumBHCO+Csg+TotalNestling+(1|NestIDSession.x), data=ProvData,family="gaussian")
-summary(Model1)
 
 BegData=NB%>%
-  left_join(VM,select(NumHosts,NumBHCO,TotalNestling,OrdDate),by="NestID")%>%
   filter(BehaviorCode=="Begging")%>%
-  group_by(NestID,BehaviorCode,NestIDSession.y,TotalNestling.y,NumBHCO.y,NumHosts.y,NestlingAgeDays.y)%>%
+  filter(!(NestVisability=="0-49"))%>%
+  mutate_at(vars(Species), ~replace_na(., 'DICK'))%>%
+  filter(Species=="DICK")%>%
+  filter(!(StartMinute>30))%>%
+  group_by(Year,OrdDate,FilmDuration,NestID,BehaviorCode,NestIDSession,TotalNestling,XBHCO,XHosts,Parasitized,propBHCO,AvgAgeDays,FilmStart)%>%
   summarize(BegDuration = sum(Duration_Sec))%>%
-  mutate(PercentTime=BegDuration/(20*60))%>%
-  filter(TotalNestling.y>0)
+  mutate(PercentTime=BegDuration/(FilmDuration*60*60))
+  filter(TotalNestling>0)
 
+  NestChecks=read_csv("Data_July2022/NestChecks_7.16.2022.csv")%>%
+    clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
+    mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+    mutate(Date=format(mdy(Date),'%m/%d/%y'))%>%
+    mutate(Year=year(mdy(Date)))%>%
+    filter(Year>2014)%>%
+    filter(Year<2022)%>%
+    mutate(Stage = replace(Stage, Stage=="Fledge", "Fledged"))%>%
+    mutate(Stage = replace(Stage, Stage=="Cowbird fledge", "Cowbird fledged"))%>%
+    filter(grepl('Nestling|Fledged|Abandoned|Dead|Cowbird fledged', Stage))%>% 
+    group_by(NestID)%>%
+    mutate(MaxBHCO=max(ParasiteChicks),
+           MaxHost=max(HostChicks),
+           MaxChicks=MaxHost+MaxBHCO)%>%
+    arrange(NestID, VisitID) %>% 
+    group_by(NestID) %>% 
+    summarise_all(last)%>%
+    left_join(Veg_All,by="NestID")%>%
+    mutate_at(vars(Species), ~replace_na(., 'DICK'))%>%
+    filter(Species=="DICK")
+  
+# _____________________________________________________####
+####3. Analysis for ESA  - DICK ####
+# _____________________________________________________####
 
-PercentTime=glmmTMB(PercentTime~NumBHCO.y+NumHosts.y+NestlingAgeDays.y+(1|NestIDSession.y),family="tweedie",data=BegData)
-summary(PercentTime)
+####4a. Descriptive data - sample size, average provisioning rates, most commonly provisioned order and size####
 
+#Sample Size
+length(unique(ProvDataSession$NestIDSession)) #Sample Size - How many nest filming sessions (Will change when new data is inputted)
+length(unique(ProvDataSession$NestID)) #Sample Size - How many nests (Will change when new data is inputted)
 
+#Most common food items and sizes
 NestlingDiet=PB%>%
   filter(grepl("Provisioning", BehaviorCode),na.rm=TRUE)%>% 
   filter(grepl("DICK",Species),na.rm=TRUE)%>%
   filter(!grepl('0-49', NestVisability))%>% 
   group_by(Species,ArthSize,ArthID)%>%
   summarize(count=n())%>%
-  mutate(percent=count/1065)
+  mutate(percent=count/sum(count))
 
-#To do: figure out how to extract species and put it in it's own column
-NestChecks=read_csv("Data_July2022/NestChecks_2.Mar.2022.csv")%>%
-  clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
-  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
-  mutate(Date=format(mdy(Date),'%m/%d/%y'))%>%
-  mutate(Year=year(mdy(Date)))%>%
-  filter(Year>2014)%>%
-  mutate(Stage = replace(Stage, Stage=="Fledge", "Fledged"))%>%
-  mutate(Stage = replace(Stage, Stage=="Cowbird fledge", "Cowbird fledged"))%>%
-  filter(grepl('Nestling|Fledged|Abandoned|Dead|Cowbird fledged', Stage))%>% 
-  group_by(NestID)%>%
-  mutate(MaxBHCO=max(ParasiteChicks),
-         MaxHost=max(HostChicks),
-         MaxChicks=MaxHost+MaxBHCO)%>%
-  arrange(NestID, VisitID) %>% 
-  group_by(NestID) %>% 
-  summarise_all(last)%>%
-  left_join(veg,by="NestID")
+print(NestlingDiet)
+#need average provisioning rates 
+
+
+####4b. Impact of vegetation and BHCO on provisioning rates####
+
+names(ProvDataSession) #Names of columns
+
+Nuisance_Mods_DICK= function(df) {
+  Null                   = glmmTMB(Beh_per_h ~ 1                 + (1|PasturePatchYear) + (1|NestIDSession),  data=df, family="gaussian")
+  TimeofDay              = glmmTMB(Beh_per_h ~ FilmStart         + (1|PasturePatchYear) + (1|NestIDSession),  data=df, family="gaussian")
+  Date                   = glmmTMB(Beh_per_h ~ OrdDate           + (1|PasturePatchYear) + (1|NestIDSession),  data=df, family="gaussian")
+
+  mods=list(Null,   TimeofDay,   Date)  
+  names=c( "Null", "TimeofDay", "Date")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
+
+Nuisance_Mods_DICK(ProvDataSession)
+
+
+NestContents_Mods_DICK= function(df) {
+  Null                   = glmmTMB(Beh_per_h ~ 1               + (1|PasturePatchYear),  data=df, family="gaussian")
+  TotalNestling          = glmmTMB(Beh_per_h ~ TotalNestling   + (1|PasturePatchYear),  data=df, family="gaussian")
+  PropBHCO               = glmmTMB(Beh_per_h ~ propBHCO        + (1|PasturePatchYear),  data=df, family="gaussian")
+  NumBHCO                = glmmTMB(Beh_per_h ~ XBHCO           + (1|PasturePatchYear),  data=df, family="gaussian")
+  PresBHCO               = glmmTMB(Beh_per_h ~ Parasitized     + (1|PasturePatchYear),  data=df, family="gaussian")
+  NestlingAge            = glmmTMB(Beh_per_h ~ AvgAgeDays      + (1|PasturePatchYear),  data=df, family="gaussian")
+  
+  mods=list(Null,   TotalNestling,   PropBHCO,    NumBHCO,   PresBHCO,   NestlingAge)  
+  names=c( "Null", "TotalNestling", "PropBHCO",  "NumBHCO", "PresBHCO", "NestlingAge")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
+
+NestContents_Mods_DICK(ProvDataSession)
+
+Veg_Mods_DICK = function(df) {
+  Null                      = glmmTMB(Beh_per_h ~ 1             + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR5                     = glmmTMB(Beh_per_h ~ FEAR_5        + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR25                    = glmmTMB(Beh_per_h ~ FEAR_25       + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEARPasture               = glmmTMB(Beh_per_h ~ FEAR_Pasture  + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG5                      = glmmTMB(Beh_per_h ~ CSG_5         + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG25                     = glmmTMB(Beh_per_h ~ CSG_25        + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSGPasture                = glmmTMB(Beh_per_h ~ CSG_Pasture   + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG5                      = glmmTMB(Beh_per_h ~ WSG_5         + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG25                     = glmmTMB(Beh_per_h ~ WSG_25        + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSGPasture                = glmmTMB(Beh_per_h ~ WSG_Pasture   + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb5                     = glmmTMB(Beh_per_h ~ Forb_5        + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb25                    = glmmTMB(Beh_per_h ~ Forb_25       + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  ForbPasture               = glmmTMB(Beh_per_h ~ Forb_Pasture  + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  Robel5                    = glmmTMB(Beh_per_h ~ Robel_5       + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  Robel25                   = glmmTMB(Beh_per_h ~ Robel_25      + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  RobelPasture              = glmmTMB(Beh_per_h ~ Robel_Pasture + TotalNestling + Parasitized + (1|PasturePatchYear),  data=df, family="gaussian")
+  
+  mods=list(Null,   FEAR5,   FEAR25,    FEARPasture,   CSG5,     CSG25,      CSGPasture,   WSG5,   WSG25,   WSGPasture,Forb5,   Forb25,   ForbPasture,   Robel5,   Robel25,  RobelPasture)  
+  names=c( "Null", "FEAR5", "FEAR25",  "FEARPasture", "CSG5",   "CSG25",    "CSGPasture", "WSG5", "WSG25", "WSGPasture","Forb5", "Forb25", "ForbPasture", "Robel5", "Robel25", "RobelPasture")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
+
+Veg_Mods_DICK(ProvDataSession)
+
+
+####4c. Impact of BHCO on provisioning rates####
+
+Nuisance_Mods_BHCO= function(df) {
+  Null                   = glmmTMB(PercentTime ~ 1         ,  data=df, family="beta_family")
+  TimeofDay              = glmmTMB(PercentTime ~ FilmStart ,  data=df, family="beta_family")
+  Date                   = glmmTMB(PercentTime ~ OrdDate   ,  data=df, family="beta_family")
+  Age                    = glmmTMB(PercentTime ~ AvgAgeDays,  data=df, family="beta_family")
+  
+  mods=list(Null,   TimeofDay,   Date,   Age)  
+  names=c( "Null", "TimeofDay", "Date", "Age")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
+
+Nuisance_Mods_BHCO(BegData)
+
+
+NestContents_Mods_BHCO= function(df) {
+  Null                   = glmmTMB(PercentTime ~1                + FilmStart,  data=df, family="beta_family")
+  TotNestling            = glmmTMB(PercentTime ~ TotalNestling   + FilmStart,  data=df, family="beta_family")
+  PropBHCO               = glmmTMB(PercentTime ~ propBHCO        + FilmStart,  data=df, family="beta_family")
+  NumBHCO                = glmmTMB(PercentTime ~ XBHCO           + FilmStart,  data=df, family="beta_family")
+  PresBHCO               = glmmTMB(PercentTime ~ Parasitized     + FilmStart,  data=df, family="beta_family")
+  NestlingAge            = glmmTMB(PercentTime ~ AvgAgeDays      + FilmStart,  data=df, family="beta_family")
+  
+  mods=list(Null,   TotNestling,   PropBHCO,    NumBHCO,   PresBHCO,   NestlingAge)  
+  names=c( "Null", "TotNestling", "PropBHCO",  "NumBHCO", "PresBHCO", "NestlingAge")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
+
+NestContents_Mods_BHCO(BegData)
+
+
+
+####4d. Nest survival analysis#### Jaime will need to do 
+
+####4e. Impact of vegetation on parasitism
 
 summary(as.factor(NestChecks$Year))
 summary(as.factor(NestChecks$Stage))
 summary(as.factor(NestChecks$Species))
 
 
-Model1=glm(MaxBHCO~Fear, data=NestChecks,family="poisson")
+Model1=glm(MaxBHCO~FEAR_Pasture, data=NestChecks,family="poisson")
 summary(Model1)
 
-
 names(NestChecks)
+
+Veg_Mods_Checks = function(df) {
+  Null                      = glmmTMB(MaxBHCO ~ 1            + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR5                     = glmmTMB(MaxBHCO ~ FEAR_5       + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR25                    = glmmTMB(MaxBHCO ~ FEAR_25      + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEARPasture               = glmmTMB(MaxBHCO ~ FEAR_Pasture + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG5                      = glmmTMB(MaxBHCO ~ CSG_5        + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG25                     = glmmTMB(MaxBHCO ~ CSG_25       + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSGPasture                = glmmTMB(MaxBHCO ~ CSG_Pasture  + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG5                      = glmmTMB(MaxBHCO ~ WSG_5        + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG25                     = glmmTMB(MaxBHCO ~ WSG_25       + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSGPasture                = glmmTMB(MaxBHCO ~ WSG_Pasture  + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb5                     = glmmTMB(MaxBHCO ~ Forb_5       + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb25                    = glmmTMB(MaxBHCO ~ Forb_25      + (1|PasturePatchYear),  data=df, family="gaussian")
+  ForbPasture               = glmmTMB(MaxBHCO ~ Forb_Pasture + (1|PasturePatchYear),  data=df, family="gaussian")
+  Robel5                    = glmmTMB(MaxBHCO ~ Robel_5      + (1|PasturePatchYear),  data=df, family="gaussian")
+  Robel25                   = glmmTMB(MaxBHCO ~ Robel_25     + (1|PasturePatchYear),  data=df, family="gaussian")
+  RobelPasture              = glmmTMB(MaxBHCO ~ Robel_Pasture + (1|PasturePatchYear),  data=df, family="gaussian")
+  
+  mods=list(Null,   FEAR5,   FEAR25,    FEARPasture,   CSG5,     CSG25,      CSGPasture,   WSG5,   WSG25,   WSGPasture,Forb5,   Forb25,   ForbPasture,   Robel5,   Robel25,  RobelPasture)  
+  names=c( "Null", "FEAR5", "FEAR25",  "FEARPasture", "CSG5",   "CSG25",    "CSGPasture", "WSG5", "WSG25", "WSGPasture","Forb5", "Forb25", "ForbPasture", "Robel5", "Robel25", "RobelPasture")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
+
+Veg_Mods_Checks(NestChecks)
+
+# trying Robel in all models
+Veg_Mods_Checks2 = function(df) {
+  Null                      = glmmTMB(MaxBHCO ~ Robel_5       + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR5                     = glmmTMB(MaxBHCO ~ FEAR_5        + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR25                    = glmmTMB(MaxBHCO ~ FEAR_25       + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEARPasture               = glmmTMB(MaxBHCO ~ FEAR_Pasture  + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG5                      = glmmTMB(MaxBHCO ~ CSG_5         + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG25                     = glmmTMB(MaxBHCO ~ CSG_25        + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSGPasture                = glmmTMB(MaxBHCO ~ CSG_Pasture   + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG5                      = glmmTMB(MaxBHCO ~ WSG_5         + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG25                     = glmmTMB(MaxBHCO ~ WSG_25        + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSGPasture                = glmmTMB(MaxBHCO ~ WSG_Pasture   + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb5                     = glmmTMB(MaxBHCO ~ Forb_5        + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb25                    = glmmTMB(MaxBHCO ~ Forb_25       + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+  ForbPasture               = glmmTMB(MaxBHCO ~ Forb_Pasture  + Robel_5 + (1|PasturePatchYear),  data=df, family="gaussian")
+
+  mods=list(Null,   FEAR5,   FEAR25,    FEARPasture,   CSG5,     CSG25,      CSGPasture,   WSG5,   WSG25,   WSGPasture,Forb5,   Forb25,   ForbPasture)  
+  names=c( "Null", "FEAR5", "FEAR25",  "FEARPasture", "CSG5",   "CSG25",    "CSGPasture", "WSG5", "WSG25", "WSGPasture","Forb5", "Forb25", "ForbPasture")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
+
+Veg_Mods_Checks2(NestChecks)
+
+
