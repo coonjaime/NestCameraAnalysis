@@ -133,9 +133,9 @@ Veg_All=NestInfo_all%>%
 save(Veg_All,file="Merged_Veg_Data.RData")    
   
 
-WPT_NB <- read_excel("Data_July2022/WPT_Nestling Behavior_4.9.22.xlsx")
-WPT_PB <- read_excel("Data_July2022/WPT_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical")) 
-WPT_VM <- read_excel("Data_July2022/WPT_Video_Master_4.9.22.xlsx")
+WPT_NB <- read_excel("Data_July2022/WPT_Nestling Behavior_7.2.22.xlsx")
+WPT_PB <- read_excel("Data_July2022/WPT_Parent Behavior_7.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical")) 
+WPT_VM <- read_excel("Data_July2022/WPT_Video_Master_7.2.22.xlsx")
 
 JJC_NB <- read_excel("Data_July2022/JJC_Nestling Behavior_4.9.22.xlsx")
 JJC_PB <- read_excel("Data_July2022/JJC_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
@@ -145,17 +145,17 @@ JNA_NB <- read_excel("Data_July2022/JNA_Nestling Behavior_6.15.22.xlsx")
 JNA_PB <- read_excel("Data_July2022/JNA_Parent Behavior_6.15.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
 JNA_VM <- read_excel("Data_July2022/JNA_Video_Master_6.15.22.xlsx")
 
-TEC_NB <- read_excel("Data_July2022/TEC_Nestling Behavior_4.2.22.xlsx")
-TEC_PB <- read_excel("Data_July2022/TEC_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-TEC_VM <- read_excel("Data_July2022/TEC_Video_Master_4.2.22.xlsx")
+TEC_NB <- read_excel("Data_July2022/TEC_Nestling Behavior_7.4.22.xlsx")
+TEC_PB <- read_excel("Data_July2022/TEC_Parent Behavior_7.4.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+TEC_VM <- read_excel("Data_July2022/TEC_Video_Master_7.4.22.xlsx")
 
-HKG_NB <- read_excel("Data_July2022/HKG_Nestling Behavior_4.2.22.xlsx")
-HKG_PB <- read_excel("Data_July2022/HKG_Parent Behavior_4.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-HKG_VM <- read_excel("Data_July2022/HKG_Video_Master_4.2.22.xlsx")
+HKG_NB <- read_excel("Data_July2022/HKG_Nestling Behavior_7.16.22.xlsx")
+HKG_PB <- read_excel("Data_July2022/HKG_Parent Behavior_7.16.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+HKG_VM <- read_excel("Data_July2022/HKG_Video_Master_7.16.22.xlsx")
 
-ESK_NB <- read_excel("Data_July2022/ESK_Nestling Behavior_4.9.22.xlsx")
-ESK_PB <- read_excel("Data_July2022/ESK_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-ESK_VM <- read_excel("Data_July2022/ESK_Video_Master_4.9.22.xlsx")
+ESK_NB <- read_excel("Data_July2022/ESK_Nestling Behavior_6.27.22.xlsx")
+ESK_PB <- read_excel("Data_July2022/ESK_Parent Behavior_6.27.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+ESK_VM <- read_excel("Data_July2022/ESK_Video_Master_6.27.22.xlsx")
 
 MFM_NB <- read_excel("Data_July2022/MFM_Nestling Behavior_1.2.22.xlsx")
 MFM_PB <- read_excel("Data_July2022/MFM_Parent Behavior_1.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
@@ -504,12 +504,9 @@ VM=VM_combined%>%
   # add_column("Parasitized"=as.numeric(as.logical(.$XBHCO)))%>%
   # d_column("propBHCO"=.$XBHCO/.$TotalNestling)%>%
   
-  #filtering out incomplete nests as of 4.9.22: #recheck which nests are incomplete once all datasets are ready
-  filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
+  #filtering out incomplete nests as of 7.19.22: 
   filter(!(NestIDSession=='KLT_EAME_2_21_1'))%>%
   filter(!(NestIDSession=='235_GRSP_2_21_1'))%>%
-  filter(!(NestIDSession=='RIE_RWBL_11_21_2'))%>%
-  filter(!(NestIDSession=='RIE_RWBL_7_21_2'))%>%
   
   mutate(FilmStartTime=format(ymd_hms(FilmStartTime),'%H:%M:%S'))%>%
   mutate(FilmEndTime=format(ymd_hms(FilmEndTime),'%H:%M:%S')) %>%
@@ -566,12 +563,9 @@ NB=NB_combined%>%
   mutate(BehaviorStart=ClipStart+(StartMinute/60))%>%
   filter(FilmDuration > .5)%>% #in hours
   
-  #filtering out incomplete nests as of 4.9.22:  
-  filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
+  #filtering out incomplete nests as of 7.19.22: 
   filter(!(NestIDSession=='KLT_EAME_2_21_1'))%>%
   filter(!(NestIDSession=='235_GRSP_2_21_1'))%>%
-  filter(!(NestIDSession=='RIE_RWBL_11_21_2'))%>%
-  filter(!(NestIDSession=='RIE_RWBL_7_21_2'))%>%
   
   mutate(NestVisability=recode(NestVisability, 
                                '100% - 85%'="85-100",
@@ -599,12 +593,9 @@ PB=PB_combined%>%
   mutate(NestID=recode(NestID,'KLN_DICK_1_21'="KLN_DICK_1_15"))%>% #fixing JJC mistype
   mutate(NestIDSession=recode(NestIDSession,'235_EAKI_1_21'="235_EAKI_1_21_1"))%>%
   
-  #filtering out incomplete nests as of 4.9.22:   
-  filter(!(NestIDSession=='235_DICK_21_21_1'))%>%
+  #filtering out incomplete nests as of 7.19.22: 
   filter(!(NestIDSession=='KLT_EAME_2_21_1'))%>%
   filter(!(NestIDSession=='235_GRSP_2_21_1'))%>%
-  filter(!(NestIDSession=='RIE_RWBL_11_21_2'))%>%
-  filter(!(NestIDSession=='RIE_RWBL_7_21_2'))%>%
   
   mutate(NestVisability=recode(NestVisability, 
                                '100% - 85%'="85-100",
