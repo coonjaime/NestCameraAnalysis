@@ -642,6 +642,12 @@ PB=PB_combined%>%
   mutate(TotalNestling = as.numeric(.$XHosts)+as.numeric(.$XBHCO))%>%
   add_column("Parasitized"=as.numeric(as.logical(.$XBHCO)))%>%
   add_column("propBHCO"=.$XBHCO/.$TotalNestling)
+
+arthsums <- PB %>%
+  group_by(NestIDSession, FilmDuration)%>%
+  summarize(Arthtotal = sum(Arthmm, na.rm = T))%>%
+  add_column("Arthperh"=.$Arthtotal/.$FilmDuration)
+PB <- left_join(PB, arthsums[,c(1,3,4)], by="NestIDSession")
   
   
 save(VM,file="VM.RData")
