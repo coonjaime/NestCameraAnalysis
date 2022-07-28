@@ -44,6 +44,7 @@ setwd("/cloud/project/2_ESA Provisioning Analysis")
 
 #Jaime comp wd
 setwd("~/Dropbox/_Manuscripts/Dipping/NestCameraAnalysis/2_ESA Provisioning Analysis")
+setwd("~/Documents/GitHub/NestCameraAnalysis/2_ESA Provisioning Analysis")
 
 #__1a. PACKAGES                                       ####
 #install.packages('easypackages')#do once to manage packages
@@ -137,9 +138,9 @@ WPT_NB <- read_excel("Data_July2022/WPT_Nestling Behavior_7.2.22.xlsx")
 WPT_PB <- read_excel("Data_July2022/WPT_Parent Behavior_7.2.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical")) 
 WPT_VM <- read_excel("Data_July2022/WPT_Video_Master_7.2.22.xlsx")
 
-JJC_NB <- read_excel("Data_July2022/JJC_Nestling Behavior_4.9.22.xlsx")
-JJC_PB <- read_excel("Data_July2022/JJC_Parent Behavior_4.9.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
-JJC_VM <- read_excel("Data_July2022/JJC_Video_Master_4.9.22.xlsx")
+JJC_NB <- read_excel("Data_July2022/JJC_Nestling Behavior_6.26.22.xlsx")
+JJC_PB <- read_excel("Data_July2022/JJC_Parent Behavior_6.26.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
+JJC_VM <- read_excel("Data_July2022/JJC_Video_Master_6.26.22.xlsx")
 
 JNA_NB <- read_excel("Data_July2022/JNA_Nestling Behavior_6.15.22.xlsx")
 JNA_PB <- read_excel("Data_July2022/JNA_Parent Behavior_6.15.22.xlsx", col_types = c(rep("guess",22),rep("numeric",36),"logical"))
