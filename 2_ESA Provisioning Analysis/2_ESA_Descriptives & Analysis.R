@@ -103,7 +103,7 @@ ProvDataSession=PB%>%
            Covlit_5,Covlit_25,Covlit_Pasture,
            LitDepth_5,LitDepth_25,LitDepth_Pasture,
            Forb_5,Forb_25,Forb_Pasture,
-           Robel_5,Robel_25,Robel_Pasture,Arthperh)%>%
+           Robel_5,Robel_25,Robel_Pasture,Arthtotal)%>%
   summarize(BehaviorCount = n())%>%
   filter(TotalNestling>0)%>%
   mutate(AvgAgeDays=as.numeric(AvgAgeDays))%>%
@@ -113,8 +113,7 @@ ProvDataSession=PB%>%
                             AvgAgeDays))%>%
   mutate(Beh_per_h       = BehaviorCount/(FilmDuration))%>%
   mutate(Beh_per_h_chick = Beh_per_h/TotalNestling)%>%
-  mutate(Arthperh_chick = Arthperh/TotalNestling)%>%
-  unite("PastureYear",c(Pasture,Year), sep="_", remove = FALSE)%>%
+  mutate(Arthtotal_chick = Arthtotal/TotalNestling)%>%
   filter(BehaviorCode=="Provisioning")%>%
   filter(Species=="DICK")
 
@@ -599,11 +598,11 @@ print(CSG_Plot)
 
 
 ####4f. Impact of vegetation and parasitism on amount of arthropods provisioned (size)####
-summary(ProvDataSession$Arthperh)
+summary(ProvDataSession$Arthtotal)
 Nuisance_Mods_Arth= function(df) {
-  Null                   = glmmTMB(Arthperh ~ 1                 + (1|PasturePatchYear),  data=df, family="gaussian")
-  TimeofDay              = glmmTMB(Arthperh ~ FilmStart         + (1|PasturePatchYear),  data=df, family="gaussian")
-  Date                   = glmmTMB(Arthperh ~ OrdDate           + (1|PasturePatchYear),  data=df, family="gaussian")
+  Null                   = glmmTMB(Arthtotal ~ 1                 + (1|PasturePatchYear),  data=df, family="gaussian")
+  TimeofDay              = glmmTMB(Arthtotal ~ FilmStart         + (1|PasturePatchYear),  data=df, family="gaussian")
+  Date                   = glmmTMB(Arthtotal ~ OrdDate           + (1|PasturePatchYear),  data=df, family="gaussian")
   
   mods=list(Null,   TimeofDay,   Date)  
   names=c( "Null", "TimeofDay", "Date")
@@ -614,12 +613,12 @@ Nuisance_Mods_Arth(ProvDataSession)
 
 
 NestContents_Mods_Arth= function(df) {
-  Null                   = glmmTMB(Arthperh ~ 1                        + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
-  TotalNestling          = glmmTMB(Arthperh ~ TotalNestling            + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
-  PropBHCO               = glmmTMB(Arthperh ~ propBHCO                 + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
-  NumBHCO                = glmmTMB(Arthperh ~ XBHCO                    + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
-  PresBHCO               = glmmTMB(Arthperh ~ as.factor(Parasitized)   + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
-  NestlingAge            = glmmTMB(Arthperh ~ AvgAgeDays               + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
+  Null                   = glmmTMB(Arthtotal ~ 1                        + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
+  TotalNestling          = glmmTMB(Arthtotal ~ TotalNestling            + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
+  PropBHCO               = glmmTMB(Arthtotal ~ propBHCO                 + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
+  NumBHCO                = glmmTMB(Arthtotal ~ XBHCO                    + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
+  PresBHCO               = glmmTMB(Arthtotal ~ as.factor(Parasitized)   + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
+  NestlingAge            = glmmTMB(Arthtotal ~ AvgAgeDays               + OrdDate + (1|PasturePatchYear),  data=df, family="gaussian")
   
   mods=list(Null,   TotalNestling,   PropBHCO,    NumBHCO,   PresBHCO,   NestlingAge)  
   names=c( "Null", "TotalNestling", "PropBHCO",  "NumBHCO", "PresBHCO", "NestlingAge")
@@ -629,19 +628,19 @@ NestContents_Mods_Arth= function(df) {
 NestContents_Mods_Arth(ProvDataSession)
 
 Veg_Mods_Arth= function(df) {
-  Null                      = glmmTMB(Arthperh ~ 1             + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  FEAR5                     = glmmTMB(Arthperh ~ FEAR_5        + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  FEAR25                    = glmmTMB(Arthperh ~ FEAR_25       + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  FEARPasture               = glmmTMB(Arthperh ~ FEAR_Pasture  + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  CSG5                      = glmmTMB(Arthperh ~ CSG_5         + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  CSG25                     = glmmTMB(Arthperh ~ CSG_25        + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  CSGPasture                = glmmTMB(Arthperh ~ CSG_Pasture   + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  WSG5                      = glmmTMB(Arthperh ~ WSG_5         + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  WSG25                     = glmmTMB(Arthperh ~ WSG_25        + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  WSGPasture                = glmmTMB(Arthperh ~ WSG_Pasture   + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  Forb5                     = glmmTMB(Arthperh ~ Forb_5        + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  Forb25                    = glmmTMB(Arthperh ~ Forb_25       + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  ForbPasture               = glmmTMB(Arthperh ~ Forb_Pasture  + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  Null                      = glmmTMB(Arthtotal ~ 1             + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR5                     = glmmTMB(Arthtotal ~ FEAR_5        + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR25                    = glmmTMB(Arthtotal ~ FEAR_25       + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEARPasture               = glmmTMB(Arthtotal ~ FEAR_Pasture  + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG5                      = glmmTMB(Arthtotal ~ CSG_5         + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG25                     = glmmTMB(Arthtotal ~ CSG_25        + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSGPasture                = glmmTMB(Arthtotal ~ CSG_Pasture   + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG5                      = glmmTMB(Arthtotal ~ WSG_5         + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG25                     = glmmTMB(Arthtotal ~ WSG_25        + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSGPasture                = glmmTMB(Arthtotal ~ WSG_Pasture   + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb5                     = glmmTMB(Arthtotal ~ Forb_5        + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb25                    = glmmTMB(Arthtotal ~ Forb_25       + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  ForbPasture               = glmmTMB(Arthtotal ~ Forb_Pasture  + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
   
   mods=list(Null,   FEAR5,   FEAR25,    FEARPasture,   CSG5,     CSG25,      CSGPasture,   WSG5,   WSG25,   WSGPasture,Forb5,   Forb25,   ForbPasture)  
   names=c( "Null", "FEAR5", "FEAR25",  "FEARPasture", "CSG5",   "CSG25",    "CSGPasture", "WSG5", "WSG25", "WSGPasture","Forb5", "Forb25", "ForbPasture")
@@ -651,8 +650,8 @@ Veg_Mods_Arth= function(df) {
 Veg_Mods_Arth(ProvDataSession)
 
 
-#Graphing Arthperh and forb_pasture
-Forb_Top_Arth = glmmTMB(Arthperh ~ Forb_Pasture + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
+#Graphing arthtotal and forb_pasture
+Forb_Top_Arth = glmmTMB(Arthtotal ~ Forb_Pasture + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
 summary(Forb_Top_Arth)
 
 ggpredict(Forb_Top_Arth,terms=c("Forb_Pasture[0,10,20,30,40,50,60,70]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
@@ -679,7 +678,7 @@ print(Forb_Plot_Arth)
 
 summary(ProvDataSession$Forb_Pasture)
 
-FEAR_Top_Arth = glmmTMB(Arthperh ~ FEAR_Pasture + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
+FEAR_Top_Arth = glmmTMB(Arthtotal ~ FEAR_Pasture + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
 summary(FEAR_Top_Arth)
 
 ggpredict(FEAR_Top_Arth,terms=c("FEAR_Pasture[0,10,20,30,40]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
@@ -708,7 +707,7 @@ print(FEAR_Plot)
 
 summary(ProvDataSession$WSG_Pasture)
 
-WSG_Top_Arth = glmmTMB(Arthperh ~ WSG_Pasture + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
+WSG_Top_Arth = glmmTMB(Arthtotal ~ WSG_Pasture + TotalNestling + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
 summary(WSG_Top_Arth)
 
 ggpredict(WSG_Top_Arth,terms=c("WSG_Pasture[0,10,20,30]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
@@ -731,59 +730,59 @@ WSG_Plot=ggplot(data=WSG_Pred_Arth, y=Predicted, x=WSG_Pasture)+
 print(WSG_Plot)
 
 ####4f. Impact of vegetation and parasitism on amount of arthropods provisioned (size) PER CHICK ####
-summary(ProvDataSession$Arthperh_chick)
+summary(ProvDataSession$Arthtotal)
 Nuisance_Mods_Arth= function(df) {
-  Null                   = glmmTMB(log(Arthperh_chick) ~ 1                  + (1|PasturePatchYear), data=df, family="gaussian")
-  TimeofDay              = glmmTMB(log(Arthperh_chick) ~ FilmStart          + (1|PasturePatchYear), data=df, family="gaussian")
-  Date                   = glmmTMB(log(Arthperh_chick) ~ OrdDate            + (1|PasturePatchYear), data=df, family="gaussian")
- 
+  Null                   = glmmTMB(Arthtotal_chick ~ 1                  , data=df, family="gaussian")
+  TimeofDay              = glmmTMB(Arthtotal_chick ~ FilmStart          , data=df, family="gaussian")
+  Date                   = glmmTMB(Arthtotal_chick ~ OrdDate            , data=df, family="gaussian")
+  
   mods=list(Null,   TimeofDay,   Date)  
   names=c( "Null", "TimeofDay", "Date")
   
   print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
 
-Nuisance_Mods_Arth(subset(ProvDataSession, Arthperh_chick>0))
+Nuisance_Mods_Arth(ProvDataSession)
 
 
 NestContents_Mods_Arth= function(df) {
-  Null                   = glmmTMB(log(Arthperh_chick) ~ 1                      + (1|PasturePatchYear),  data=df, family="gaussian")
-  PropBHCO               = glmmTMB(log(Arthperh_chick) ~ propBHCO               + (1|PasturePatchYear),  data=df, family="gaussian")
-  NumBHCO                = glmmTMB(log(Arthperh_chick) ~ XBHCO                  + (1|PasturePatchYear),  data=df, family="gaussian")
-  PresBHCO               = glmmTMB(log(Arthperh_chick) ~ as.factor(Parasitized) + (1|PasturePatchYear),  data=df, family="gaussian")
-  NestlingAge            = glmmTMB(log(Arthperh_chick) ~ AvgAgeDays             + (1|PasturePatchYear),  data=df, family="gaussian")
+  Null                   = glmmTMB(Arthtotal_chick ~ 1                       + (1|PasturePatchYear),  data=df, family="gaussian")
+  PropBHCO               = glmmTMB(Arthtotal_chick ~ propBHCO                + (1|PasturePatchYear),  data=df, family="gaussian")
+  NumBHCO                = glmmTMB(Arthtotal_chick ~ XBHCO                   + (1|PasturePatchYear),  data=df, family="gaussian")
+  PresBHCO               = glmmTMB(Arthtotal_chick ~ as.factor(Parasitized)  + (1|PasturePatchYear),  data=df, family="gaussian")
+  NestlingAge            = glmmTMB(Arthtotal_chick ~ AvgAgeDays              + (1|PasturePatchYear),  data=df, family="gaussian")
   
   mods=list(Null,   PropBHCO,    NumBHCO,   PresBHCO,   NestlingAge)  
   names=c( "Null", "PropBHCO",  "NumBHCO", "PresBHCO", "NestlingAge")
   
   print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
 
-NestContents_Mods_Arth(subset(ProvDataSession, Arthperh_chick>0))
+NestContents_Mods_Arth(ProvDataSession)
 
 Veg_Mods_Arth= function(df) {
-  Null                      = glmmTMB(log(Arthperh_chick) ~ 1            + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  FEAR5                     = glmmTMB(log(Arthperh_chick) ~ FEAR_5       + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  FEAR25                    = glmmTMB(log(Arthperh_chick) ~ FEAR_25      + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  FEARPasture               = glmmTMB(log(Arthperh_chick) ~ FEAR_Pasture + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  CSG5                      = glmmTMB(log(Arthperh_chick) ~ CSG_5        + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  CSG25                     = glmmTMB(log(Arthperh_chick) ~ CSG_25       + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  CSGPasture                = glmmTMB(log(Arthperh_chick) ~ CSG_Pasture  + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  WSG5                      = glmmTMB(log(Arthperh_chick) ~ WSG_5        + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  WSG25                     = glmmTMB(log(Arthperh_chick) ~ WSG_25       + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  WSGPasture                = glmmTMB(log(Arthperh_chick) ~ WSG_Pasture  + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  Forb5                     = glmmTMB(log(Arthperh_chick) ~ Forb_5       + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  Forb25                    = glmmTMB(log(Arthperh_chick) ~ Forb_25      + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  ForbPasture               = glmmTMB(log(Arthperh_chick) ~ Forb_Pasture + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  Null                      = glmmTMB(Arthtotal ~ 1            + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR5                     = glmmTMB(Arthtotal ~ FEAR_5       + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR25                    = glmmTMB(Arthtotal ~ FEAR_25      + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEARPasture               = glmmTMB(Arthtotal ~ FEAR_Pasture + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG5                      = glmmTMB(Arthtotal ~ CSG_5        + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG25                     = glmmTMB(Arthtotal ~ CSG_25       + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSGPasture                = glmmTMB(Arthtotal ~ CSG_Pasture  + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG5                      = glmmTMB(Arthtotal ~ WSG_5        + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG25                     = glmmTMB(Arthtotal ~ WSG_25       + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSGPasture                = glmmTMB(Arthtotal ~ WSG_Pasture  + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb5                     = glmmTMB(Arthtotal ~ Forb_5       + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb25                    = glmmTMB(Arthtotal ~ Forb_25      + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  ForbPasture               = glmmTMB(Arthtotal ~ Forb_Pasture + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
   
   mods=list(Null,   FEAR5,   FEAR25,    FEARPasture,   CSG5,     CSG25,      CSGPasture,   WSG5,   WSG25,   WSGPasture,Forb5,   Forb25,   ForbPasture)  
   names=c( "Null", "FEAR5", "FEAR25",  "FEARPasture", "CSG5",   "CSG25",    "CSGPasture", "WSG5", "WSG25", "WSGPasture","Forb5", "Forb25", "ForbPasture")
   
   print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
 
-Veg_Mods_Arth(subset(ProvDataSession, Arthperh_chick>0))
+Veg_Mods_Arth(ProvDataSession)
 
 
-#Graphing Arthperh and forb_pasture
-Forb_Top_Arth_chick = glmmTMB(Arthperh_chick ~ Forb_Pasture  + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
+#Graphing arthtotal and forb_pasture
+Forb_Top_Arth_chick = glmmTMB(Arthtotal_chick ~ Forb_Pasture  + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
 summary(Forb_Top_Arth_chick)
 
 ggpredict(Forb_Top_Arth_chick,terms=c("Forb_Pasture[0,10,20,30,40,50,60,70]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
@@ -810,7 +809,7 @@ print(Forb_Plot_Arth_chick)
 
 summary(ProvDataSession$Forb_Pasture)
 
-FEAR_Top_Arth_chick = glmmTMB(Arthperh_chick ~ FEAR_Pasture + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
+FEAR_Top_Arth_chick = glmmTMB(Arthtotal_chick ~ FEAR_Pasture + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
 summary(FEAR_Top_Arth_chick)
 
 ggpredict(FEAR_Top_Arth_chick,terms=c("FEAR_Pasture[0,10,20,30,40]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
@@ -839,7 +838,7 @@ print(FEAR_Plot_chick)
 
 summary(ProvDataSession$WSG_Pasture)
 
-WSG_Top_Arth_chick = glmmTMB(Arthperh_chick ~ WSG_Pasture + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
+WSG_Top_Arth_chick = glmmTMB(Arthtotal_chick ~ WSG_Pasture + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
 summary(WSG_Top_Arth_chick)
 
 ggpredict(WSG_Top_Arth_chick,terms=c("WSG_Pasture[0,10,20,30]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
