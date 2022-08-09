@@ -24,6 +24,8 @@
 #_____________________________________________________####
 ####1. SETUP  ####
 
+#Jaime's computer setup
+#setwd("~/NestCameraAnalysis/2_ESA Provisioning Analysis")
 #feel free to add your own setup if using this code
 
 #Ethan wd
@@ -45,18 +47,18 @@ setwd("~/Documents/GitHub/NestCameraAnalysis/2_ESA Provisioning Analysis")
 
 #ggplot themes----
 theme_bar_noleg <- function () { 
-  theme(text=element_text(size=20),
+  theme(text=element_text(size=14),
         axis.title=element_text(face="bold", size=16),
-        axis.text=element_text(size=20,color="black"),
+        axis.text=element_text(size=14,color="black"),
         axis.line=element_line(color="black",size=1),
         panel.background=element_rect("snow2"),
         panel.grid=element_blank(),
         legend.position="none")}
 
 theme_bar_leg <- function () { 
-  theme(text=element_text(size=20),
+  theme(text=element_text(size=14),
         axis.title=element_text(face="bold", size=16),
-        axis.text=element_text(size=20,color="black"),
+        axis.text=element_text(size=14,color="black"),
         axis.line=element_line(color="black",size=1),
         panel.background=element_rect("snow2"),
         panel.grid=element_blank(),
@@ -67,13 +69,12 @@ theme_bar_leg <- function () {
 library('easypackages')#load package managing package
 
 packages('TMB','ggeffects','tidyverse','ggplot2','ggpubr','glmmTMB','readxl','janitor','lubridate','stringr','reshape2', 'AICcmodavg')
-packages("GLMMmisc", "remotes","tidyverse", "ggeffects", "unmarked", "patchwork","lme4","MASS")
 
 theme_line<-function() {
   theme(text=element_text(size=10),
-        axis.title.y=element_text(margin=margin (b = -1),face="bold", size=20, family="Arial"),
+        axis.title.y=element_text(margin=margin (b = -1),face="bold", size=14, family="Arial"),
         axis.text=element_text(size=10,color="black"),
-        axis.title.x=element_text(margin=margin (b = -1),face="bold", size=20, family="Arial"),
+        axis.title.x=element_text(margin=margin (b = -1),face="bold", size=14, family="Arial"),
         axis.line=element_line(color="black",size=0.75),
         panel.background=element_rect("snow2"),
         panel.grid=element_blank(),
@@ -91,7 +92,6 @@ load("Merged_Veg_Data.RData")
 
 #calculating behavior rates per hour by the session
 ProvDataSession=PB%>%
-  mutate(NestID=str_replace_all(NestID,"KELL", "KLL"))%>%
   #filter(!grepl('TRUE', AbleSeeDipping))%>% 
   #filter(!grepl('0-49', NestVisability))%>% 
   group_by(Species,NestIDSession,NestID,Session,BehaviorCode,NestVisability,FilmDuration,Year, FilmStart,
@@ -121,7 +121,6 @@ ProvDataSession=PB%>%
 
 ##calculating behavior rates per hour by the clip
 ProvDataClip=PB%>%
-  mutate(NestID=str_replace_all(NestID,"KELL", "KLL"))%>%
   filter(!(StartMinute>30))%>% #filtering out any weird data
   #filter(!grepl('TRUE', AbleSeeDipping))%>% 
   #filter(!grepl('0-49', NestVisability))%>% 
@@ -160,10 +159,8 @@ BegData=NB%>%
   filter(TotalNestling>0)%>%
   filter(PercentTime>0)
 
-  NestChecks=read_csv("Data_July2022/NestChecks_4.8.2022.csv")%>%
+  NestChecks=read_csv("Data_July2022/NestChecks_7.16.2022.csv")%>%
     clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
-    mutate(NestID=str_replace_all(NestID,"KELL", "KLL"))%>%
-
     mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
     mutate(Date=format(mdy(Date),'%m/%d/%y'))%>%
     mutate(Year=year(mdy(Date)))%>%
@@ -183,46 +180,6 @@ BegData=NB%>%
     mutate_at(vars(Species), ~replace_na(., 'DICK'))%>%
     filter(Species=="DICK")
   
-#get pasture_patch_year from 2015/2016 
-  
-Nestchecks.15.16 = read_csv("Data_July2022/NestChecks_2015_2016.csv")%>%
-  clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
-  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
-  dplyr::select(c(NestID, Pasture,PasturePatchYear))
-
-Survival= read_csv("Data_July2022/NestChecks_4.8.2022.csv")%>%
-  clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
-  mutate(NestID=str_replace_all(NestID,"KELL", "KLL"))%>%
-  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
-  mutate(OrdDate=yday(mdy(Date)))%>% 
-  filter(Year>2014)%>%
-  filter(Year<2022)%>%
-  #mutate(Stage = replace(Stage, Stage=="Fledge", "Fledged"))%>%
-  mutate(Stage = replace(Stage, Stage=="Abandoned", "Dead"))%>%
-  mutate(Trials="1")%>%
-  left_join(Veg_All,by="NestID")%>%
-  mutate_at(vars(Species), ~replace_na(., 'DICK'))%>%
-  filter(Species=="DICK")%>%
-  drop_na(PasturePatchYear)%>% #gets rid of weird guys that are missing patch - need to fix for paper
-  arrange(VisitID)%>%
-  group_by(NestID)%>%
-  mutate(ExpDays=OrdDate-lag(OrdDate))%>%
-  mutate(ExpDays=replace_na(ExpDays,3))%>%
-  group_by(NestID)%>%
-  mutate(double_fail=(Survived=="0" & lag(Survived)=="0"))%>%
-  arrange(VisitID)%>%
-  group_by(NestID)%>%
-  mutate(double_succeed=(Fledge=="1") & lag (Fledge=="1"))%>%
-  filter(!(double_fail=="TRUE"))%>%
-  filter(!(double_succeed=="TRUE"))%>%
-  ungroup()%>%
-  mutate_at(vars(FEAR_25:LitDepth_5),~replace_na(.,mean(.,na.rm=TRUE)))%>%
-  dplyr::select(NestID,VisitNum:Year,Stage:ParasiteChicks,Camera:EstFledglings,OrdDate:ExpDays)%>%
-  drop_na(FEAR_Pasture)%>%
-  drop_na(FEAR_25)%>%
-  filter(ExpDays>0)
-  
-
 # _____________________________________________________####
 ####3. Analysis for ESA  - DICK ####
 # _____________________________________________________####
@@ -259,17 +216,6 @@ samplesize2=ProvDataSession%>%
   tally()%>%
   spread(Year, n)
 samplesize2
-
-#c) number of nests in nest survival analysis
-samplesize5=Survival%>%
-  group_by(Year,NestID)%>%
-  summarize_at(vars(Survived),first)%>%
-  group_by(Year)%>%
-  tally()%>%
-  spread(Year, n)
-samplesize5
-#  `2015` `2016` `2021`
-#    52     85     35
 
 #Within the full dataset that is currently done
 #a) Number of filming sessions
@@ -567,135 +513,6 @@ print(Paras_Plot_Beg)
 
 
 ####4d. Nest survival analysis#### Jaime will need to do ####
-
-#https://rpubs.com/bbolker/logregexp
-#also https://www.perrywilliams.us/wp-content/uploads/2018/03/Crimmins2016factors.pdf
-#got the idea to use cloglog here: https://stats.stackexchange.com/questions/148699/modelling-a-binary-outcome-when-census-interval-varies
-
-Nuisance_Mods_Survival= function(df) {
-  Null                   = glmmTMB(Survived ~ 1         + offset(log(ExpDays)),  data=df, family=binomial(link="cloglog"))
-  Date                   = glmmTMB(Survived ~ OrdDate   + offset(log(ExpDays)),  data=df, family=binomial(link="cloglog"))
-  
-  mods=list(Null,   Date)  
-  names=c( "Null", "Date")
-  
-  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
-
-Nuisance_Mods_Survival(Survival)
-
-
-Veg_Mods_Survive = function(df) {
-  Null                      = glmmTMB(Survived ~ 1             + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  FEAR5                     = glmmTMB(Survived ~ FEAR_5        + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  FEAR25                    = glmmTMB(Survived ~ FEAR_25       + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  FEARPasture               = glmmTMB(Survived ~ FEAR_Pasture  + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  CSG5                      = glmmTMB(Survived ~ CSG_5         + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  CSG25                     = glmmTMB(Survived ~ CSG_25        + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  CSGPasture                = glmmTMB(Survived ~ CSG_Pasture   + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  WSG5                      = glmmTMB(Survived ~ WSG_5         + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  WSG25                     = glmmTMB(Survived ~ WSG_25        + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  WSGPasture                = glmmTMB(Survived ~ WSG_Pasture   + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  Forb5                     = glmmTMB(Survived ~ Forb_5        + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  Forb25                    = glmmTMB(Survived ~ Forb_25       + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  ForbPasture               = glmmTMB(Survived ~ Forb_Pasture  + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  
-  mods=list(Null,   FEAR5,   FEAR25,    FEARPasture,   CSG5,     CSG25,      CSGPasture,   WSG5,   WSG25,   WSGPasture,Forb5,   Forb25,   ForbPasture)  
-  names=c( "Null", "FEAR5", "FEAR25",  "FEARPasture", "CSG5",   "CSG25",    "CSGPasture", "WSG5", "WSG25", "WSGPasture","Forb5", "Forb25", "ForbPasture")
-  
-  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
-
-Veg_Mods_Survive(Survival)
-
-Survive_Model_Forb=glmmTMB(Survived~Forb_25+WSG_25+offset(log(ExpDays)), data=Survival,family=binomial(link="cloglog"))
-Survive_Model_FEAR=glmmTMB(Survived~FEAR_Pasture+offset(log(ExpDays)), data=Survival,family=binomial(link="cloglog"))
-
-
-
-summary(Survive_Model_Forb)
-summary(Survive_Model_FEAR)
-
-
-#https://rpubs.com/bbolker/logregexp
-#also https://www.perrywilliams.us/wp-content/uploads/2018/03/Crimmins2016factors.pdf
-#got the idea to use cloglog here: https://stats.stackexchange.com/questions/148699/modelling-a-binary-outcome-when-census-interval-varies
-
-
-logexp <- function(exposure = 1) {
-  ## hack to help with visualization, post-prediction etc etc
-  get_exposure <- function() {
-    if (exists("..exposure", env=.GlobalEnv))
-      return(get("..exposure", envir=.GlobalEnv))
-    exposure
-  }
-  linkfun <- function(mu) qlogis(mu^(1/get_exposure()))
-  ## FIXME: is there some trick we can play here to allow
-  ##   evaluation in the context of the 'data' argument?
-  linkinv <- function(eta) plogis(eta)^get_exposure()
-  logit_mu_eta <- function(eta) {
-    ifelse(abs(eta)>30,.Machine$double.eps,
-           exp(eta)/(1+exp(eta))^2)
-  }
-  mu.eta <- function(eta) {       
-    get_exposure() * plogis(eta)^(get_exposure()-1) *
-      logit_mu_eta(eta)
-  }
-  valideta <- function(eta) TRUE
-  link <- paste("logexp(", deparse(substitute(exposure)), ")",
-                sep="")
-  structure(list(linkfun = linkfun, linkinv = linkinv,
-                 mu.eta = mu.eta, valideta = valideta, 
-                 name = link),
-            class = "link-glm")}
-
-
-m_glm <- glm(Survived~Forb_Pasture,
-             family=binomial(link=logexp(Survival$ExpDays)),
-             data=Survival,start=c(1,0))
-summary(m_glm)
-
-#producing predicted values
-
-
-ggpredict(Survive_Model_Forb,terms=c("Forb_Pasture[all]","ExpDays[1]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
-
-Forb_Pred_Survival = as.data.frame(ggpredict(Survive_Model_Forb,terms=c("Forb_25[all]","ExpDays[1]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE))
-#turns predictions into a dataframe that we can more easily manipulate
-colnames(Forb_Pred_Survival)=c("Forb_25", "Predicted", "SE", "Lower","Upper") #renames columns 
-
-
-Forb_Plot=ggplot(data=Forb_Pred_Survival, y=Predicted, x=Forb_25)+  
-  geom_smooth(aes(x=Forb_25, y=Predicted, ymin=Lower, ymax=Upper),color="black", fill="darkgreen", stat="identity")+
-  #scale_fill_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3"))+ 
-  #scale_color_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3")) +
-  #scale_x_continuous(limits=c(10,75),expand=c(0,0))+
-  #scale_y_continuous(limits = c(0,1), breaks =c(0,.2,4,.6,.8,1), expand = c(0, 0)) +
-  #annotate(geom="text", x=1.9, y=51, label= "*",size=12)+
-  theme_line()+
-  #labs(y = "Parasitism Intensity", x="Forb percent cover within 5m")+ 
-  ggtitle("")
-print(Forb_Plot)
-
-
-
-ggpredict(Survive_Model_Forb,terms=c("FEAR_Pasture[all]","ExpDays[1]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
-
-FEAR_Pred_Survival = as.data.frame(ggpredict(Survive_Model_Forb,terms=c("FEAR_Pasture[all]","ExpDays[1]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE))
-#turns predictions into a dataframe that we can more easily manipulate
-colnames(FEAR_Pred_Survival)=c("FEAR_Pasture", "Predicted", "SE", "Lower","Upper") #renames columns 
-
-FEAR_Plot=ggplot(data=FEAR_Pred_Survival, y=Predicted, x=FEAR_Pasture)+  
-  geom_smooth(aes(x=FEAR_Pasture, y=Predicted, ymin=Lower, ymax=Upper),color="black", fill="darkgreen", stat="identity")+
-  #scale_fill_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3"))+ 
-  #scale_color_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3")) +
- # scale_x_continuous(limits=c(10,75),expand=c(0,0))+
-  #scale_y_continuous(limits = c(0,1), breaks =c(0,.2,4,.6,.8,1), expand = c(0, 0)) +
-  #annotate(geom="text", x=1.9, y=51, label= "*",size=12)+
-  theme_line()+
-  #labs(y = "Parasitism Intensity", x="FEAR percent cover within 5m")+ 
-  ggtitle("")
-print(FEAR_Plot)
-
-
 
 ####4e. Impact of vegetation on parasitism####
 

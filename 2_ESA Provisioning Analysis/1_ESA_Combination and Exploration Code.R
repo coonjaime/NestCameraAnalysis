@@ -57,8 +57,7 @@ packages('TMB','tidyverse','ggplot2','glmmTMB','readxl','janitor','lubridate')
 
 veg_25<-read_csv("Data_July2022/NestVeg.csv")[-c(4904),]%>%
   clean_names(case = "upper_camel", abbreviations = c("ID","CSG","WSG","FEAR"))%>%
-  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%  
-  mutate(NestID=str_replace_all(NestID,"KELL", "KLL"))%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
  # filter(Year>2014)%>%
  # filter(grepl('DICK', NestID))%>%
   filter(!(NestID=="RIS_10_10"))%>%
@@ -73,7 +72,6 @@ save(veg_25,file="veg_25.RData")
 veg_5<-read_csv("Data_July2022/NestVeg.csv")[-c(4904),]%>% #Note from JJC - what does 7342 do?
   clean_names(case = "upper_camel", abbreviations = c("ID","CSG","WSG","FEAR"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
-  mutate(NestID=str_replace_all(NestID,"KELL", "KLL"))%>%
   #filter(grepl('DICK', NestID))%>%
   filter(!(NestID=="RIS_10_10"))%>%
   filter(Distance<6)%>%
@@ -104,7 +102,6 @@ veg_pasture<-read_csv("Data_July2022/DaubData.csv")%>%
 save(veg_pasture,file="veg_pasture.RData")
 
 EarlyYearNestInfo=read_csv("Data_July2022/NestMonitoring_2015_2016.csv")%>%
-  mutate(NestID=str_replace_all(NestID,"KELL", "KLL"))%>%
   clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   group_by(NestID) %>% 
@@ -112,15 +109,15 @@ EarlyYearNestInfo=read_csv("Data_July2022/NestMonitoring_2015_2016.csv")%>%
   filter(Year>2014)%>%
   mutate(PasturePatch = str_replace(PasturePatch, "[.]", "_"))%>%
   unite("PasturePatchYear",c(PasturePatch,Year), sep="_", remove = FALSE)%>%
-  dplyr::select(c(NestID,Pasture,PasturePatchYear,PasturePatch))
+  select(c(NestID,Pasture,PasturePatchYear,PasturePatch))
 
 LateYearNestInfo=read_csv("Data_July2022/NestPatches_2021.csv")%>%
-  dplyr::select(name,Patch,Pasture,Year)%>%
+  select(name,Patch,Pasture,Year)%>%
   rename(NestID=name)%>%
   rename(PasturePatch=Patch)%>%
   mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
   unite("PasturePatchYear",c(PasturePatch,Year), sep="_", remove = FALSE)%>%
-  dplyr::select(-Year)
+  select(-Year)
 
 NestInfo_all=rbind(EarlyYearNestInfo,LateYearNestInfo)
 names(NestInfo_all)
@@ -134,7 +131,7 @@ Veg_All=NestInfo_all%>%
     #lots of NAs- are these the ones we didn't do veg at? maybe need to check datasheets. 
     #possible some data entry wasn't done
 
-save(Veg_All,file="Veg_All.RData")    
+save(Veg_All,file="Merged_Veg_Data.RData")    
   
 
 WPT_NB <- read_excel("Data_July2022/WPT_Nestling Behavior_7.2.22.xlsx")
