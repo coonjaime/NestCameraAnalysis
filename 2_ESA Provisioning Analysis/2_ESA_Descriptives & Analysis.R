@@ -45,18 +45,18 @@ setwd("~/Documents/GitHub/NestCameraAnalysis/2_ESA Provisioning Analysis")
 
 #ggplot themes----
 theme_bar_noleg <- function () { 
-  theme(text=element_text(size=20),
-        axis.title=element_text(face="bold", size=16),
-        axis.text=element_text(size=20,color="black"),
+  theme(text=element_text(size=14),
+        axis.title=element_text(face="bold", size=14),
+        axis.text=element_text(size=14,color="black"),
         axis.line=element_line(color="black",size=1),
         panel.background=element_rect("snow2"),
         panel.grid=element_blank(),
         legend.position="none")}
 
 theme_bar_leg <- function () { 
-  theme(text=element_text(size=20),
-        axis.title=element_text(face="bold", size=16),
-        axis.text=element_text(size=20,color="black"),
+  theme(text=element_text(size=14),
+        axis.title=element_text(face="bold", size=14),
+        axis.text=element_text(size=14,color="black"),
         axis.line=element_line(color="black",size=1),
         panel.background=element_rect("snow2"),
         panel.grid=element_blank(),
@@ -70,15 +70,15 @@ packages('TMB','ggeffects','tidyverse','ggplot2','ggpubr','glmmTMB','readxl','ja
 packages("GLMMmisc", "remotes","tidyverse", "ggeffects", "unmarked", "patchwork","lme4","MASS")
 
 theme_line<-function() {
-  theme(text=element_text(size=10),
-        axis.title.y=element_text(margin=margin (b = -1),face="bold", size=20, family="Arial"),
-        axis.text=element_text(size=10,color="black"),
-        axis.title.x=element_text(margin=margin (b = -1),face="bold", size=20, family="Arial"),
+  theme(text=element_text(size=14),
+        axis.title.y=element_text(margin=margin (b = -1),face="bold", size=14, family="Arial"),
+        axis.text=element_text(size=14,color="black"),
+        axis.title.x=element_text(margin=margin (b = -1),face="bold", size=14, family="Arial"),
         axis.line=element_line(color="black",size=0.75),
         panel.background=element_rect("snow2"),
         panel.grid=element_blank(),
         legend.title=element_blank(),
-        legend.text=element_text(size=12, color="black"))
+        legend.text=element_text(size=14, color="black"))
 }
 
 #_____________________________________________________####
@@ -107,11 +107,14 @@ ProvDataSession=PB%>%
   summarize(BehaviorCount = n())%>%
   filter(TotalNestling>0)%>%
   mutate(AvgAgeDays=as.numeric(AvgAgeDays))%>%
-  mutate(AvgAgeDays=as.numeric(AvgAgeDays))%>%
   mutate(AvgAgeDays = ifelse(is.na(AvgAgeDays), 
                             mean(AvgAgeDays, na.rm = TRUE), 
                             AvgAgeDays))%>%
   mutate(Beh_per_h       = BehaviorCount/(FilmDuration))%>%
+  unite("PastureYear",c(Pasture,Year), sep="_", remove = FALSE)%>%
+  filter(BehaviorCode=="Provisioning")%>%
+  filter(Species=="DICK")
+#%>%
   mutate(Beh_per_h_chick = Beh_per_h/TotalNestling)%>%
   mutate(Arthperh_chick = Arthperh/TotalNestling)%>%
   unite("PastureYear",c(Pasture,Year), sep="_", remove = FALSE)%>%
@@ -160,7 +163,7 @@ BegData=NB%>%
   filter(TotalNestling>0)%>%
   filter(PercentTime>0)
 
-  NestChecks=read_csv("Data_July2022/NestChecks_4.8.2022.csv")%>%
+  NestChecks=read_csv("Data_July2022/NestChecks_7.16.2022.csv")%>%
     clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
     mutate(NestID=str_replace_all(NestID,"KELL", "KLL"))%>%
 
@@ -197,8 +200,13 @@ Survival= read_csv("Data_July2022/NestChecks_4.8.2022.csv")%>%
   mutate(OrdDate=yday(mdy(Date)))%>% 
   filter(Year>2014)%>%
   filter(Year<2022)%>%
-  #mutate(Stage = replace(Stage, Stage=="Fledge", "Fledged"))%>%
-  mutate(Stage = replace(Stage, Stage=="Abandoned", "Dead"))%>%
+  mutate(Stage2 =Stage)%>%
+  mutate(Stage2 = replace(Stage2, Stage=="Laying/Incubating", "Egg"))%>%
+  mutate(Stage2 = replace(Stage2, Stage=="Incubating", "Egg"))%>%
+  mutate(Stage2 = replace(Stage2, Stage=="Laying", "Egg"))%>%
+  mutate(Stage2 = replace(Stage2, Stage=="nestling", "Nestling"))%>%
+  mutate(Stage2 = replace(Stage2, Stage=="Abandoned", "Dead"))%>%
+  mutate(Stage2 = replace(Stage2, Stage=="Fledged", "Nestling"))%>%
   mutate(Trials="1")%>%
   left_join(Veg_All,by="NestID")%>%
   mutate_at(vars(Species), ~replace_na(., 'DICK'))%>%
@@ -217,11 +225,120 @@ Survival= read_csv("Data_July2022/NestChecks_4.8.2022.csv")%>%
   filter(!(double_succeed=="TRUE"))%>%
   ungroup()%>%
   mutate_at(vars(FEAR_25:LitDepth_5),~replace_na(.,mean(.,na.rm=TRUE)))%>%
-  dplyr::select(NestID,VisitNum:Year,Stage:ParasiteChicks,Camera:EstFledglings,OrdDate:ExpDays)%>%
+  dplyr::select(VisitID,NestID,VisitNum:Year,Stage:ParasiteChicks,Camera:EstFledglings,OrdDate:ExpDays)%>%
   drop_na(FEAR_Pasture)%>%
   drop_na(FEAR_25)%>%
   filter(ExpDays>0)
   
+Survival_NestlingsOnly=read_csv("Data_July2022/NestChecks_4.8.2022.csv")%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
+  mutate(NestID=str_replace_all(NestID,"KELL", "KLL"))%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  mutate(OrdDate=yday(mdy(Date)))%>% 
+  filter(Year>2014)%>%
+  filter(Year<2022)%>%
+  mutate(Stage2 =Stage)%>%
+  mutate(Stage2 = replace(Stage, Stage=="Laying/Incubating", "Egg"))%>%
+  mutate(Stage2 = replace(Stage, Stage=="Incubating", "Egg"))%>%
+  mutate(Stage2 = replace(Stage, Stage=="Laying", "Egg"))%>%
+  mutate(Stage2 = replace(Stage, Stage=="nestling", "Nestling"))%>%
+  mutate(Stage2 = replace(Stage, Stage=="Abandoned", "Dead"))%>%
+  mutate(Stage2 = replace(Stage, Stage=="Fledged", "Nestling"))%>%
+  mutate(Trials="1")%>%
+  left_join(Veg_All,by="NestID")%>%
+  mutate_at(vars(Species), ~replace_na(., 'DICK'))%>%
+  filter(Species=="DICK")%>%
+  drop_na(PasturePatchYear)%>% #gets rid of weird guys that are missing patch - need to fix for paper
+  arrange(VisitID)%>%
+  group_by(NestID)%>%
+  mutate(ExpDays=OrdDate-lag(OrdDate))%>%
+  mutate(ExpDays=replace_na(ExpDays,3))%>%
+  group_by(NestID)%>%
+  mutate(double_fail=(Survived=="0" & lag(Survived)=="0"))%>%
+  arrange(VisitID)%>%
+  group_by(NestID)%>%
+  mutate(double_succeed=(Fledge=="1") & lag (Fledge=="1"))%>%
+  filter(!(double_fail=="TRUE"))%>%
+  filter(!(double_succeed=="TRUE"))%>%
+  ungroup()%>%
+  mutate_at(vars(FEAR_25:LitDepth_5),~replace_na(.,mean(.,na.rm=TRUE)))%>%
+  dplyr::select(VisitID,NestID,VisitNum:Year,Stage:ParasiteChicks,Camera:EstFledglings,OrdDate:ExpDays)%>%
+  drop_na(FEAR_Pasture)%>%
+  drop_na(FEAR_25)%>%
+  filter(ExpDays>0)%>%
+#this is what is different
+  filter(Stage=="Nestling")%>%
+  arrange(VisitID)%>%
+  group_by(NestID)%>%
+  mutate(Parasitized=as.numeric(as.logical(lag(ParasiteChicks))))%>%
+  mutate(Parasitized_NoLag=as.numeric(as.logical(ParasiteChicks)))%>%
+  mutate(Parasitized=coalesce(Parasitized,Parasitized_NoLag))%>%
+  mutate(propBHCO=lag(ParasiteChicks)/(lag(ParasiteChicks)+lag(HostChicks)))%>%
+  mutate(propBHCO_nolag=(ParasiteChicks)/((ParasiteChicks)+(HostChicks)))%>%
+  mutate(propBHCO=coalesce(propBHCO,propBHCO_nolag))%>%
+  mutate(TotalNestling=lag(ParasiteChicks)+lag(HostChicks))%>%
+  mutate(TotalNestling_nolag=ParasiteChicks+HostChicks)%>%
+  mutate(TotalNestling=coalesce(TotalNestling,TotalNestling_nolag))%>%
+  ungroup()
+
+
+#NAs=
+#  Survival_NestlingsOnly %>% summarise_all(~ sum(is.na(.)))
+#  Code that lets us check NAs if needed
+
+Fledgies=read_csv("Data_July2022/NestChecks_4.8.2022.csv")%>%
+  clean_names(case = "upper_camel", abbreviations = c("ID"))%>%
+  mutate(NestID=str_replace_all(NestID,"KELL", "KLL"))%>%
+  mutate(NestID=str_replace_all(NestID,"[ ]","_"))%>%
+  mutate(OrdDate=yday(mdy(Date)))%>% 
+  filter(Year>2014)%>%
+  filter(Year<2022)%>%
+  left_join(Veg_All,by="NestID")%>%
+  mutate_at(vars(Species), ~replace_na(., 'DICK'))%>%
+  filter(Species=="DICK")%>%
+  drop_na(PasturePatchYear)%>% #gets rid of weird guys that are missing patch - need to fix for paper
+  filter(Stage =="Fledged" | Stage== "Dead")%>%
+  group_by(NestID) %>%
+  arrange(VisitID) %>%
+  filter(row_number()==1)%>%
+  drop_na(EstFledglings)%>%
+  dplyr::select(VisitID,NestID,VisitNum:Year,Stage,EstFledglings,OrdDate:ExpDays)%>%
+  
+  
+  arrange(VisitID)%>%
+  group_by(NestID)%>%
+  mutate(ExpDays=OrdDate-lag(OrdDate))%>%
+  mutate(ExpDays=replace_na(ExpDays,3))%>%
+  group_by(NestID)%>%
+  mutate(double_fail=(Survived=="0" & lag(Survived)=="0"))%>%
+  arrange(VisitID)%>%
+  group_by(NestID)%>%
+  mutate(double_succeed=(Fledge=="1") & lag (Fledge=="1"))%>%
+  filter(!(double_fail=="TRUE"))%>%
+  filter(!(double_succeed=="TRUE"))%>%
+  ungroup()%>%
+  mutate_at(vars(FEAR_25:LitDepth_5),~replace_na(.,mean(.,na.rm=TRUE)))%>%
+  dplyr::select(VisitID,NestID,VisitNum:Year,Stage:ParasiteChicks,Camera:EstFledglings,OrdDate:ExpDays)%>%
+  drop_na(FEAR_Pasture)%>%
+  drop_na(FEAR_25)%>%
+  filter(ExpDays>0)%>%
+  #this is what is different
+  filter(Stage=="Nestling")%>%
+  arrange(VisitID)%>%
+  group_by(NestID)%>%
+  mutate(Parasitized=as.numeric(as.logical(lag(ParasiteChicks))))%>%
+  mutate(Parasitized_NoLag=as.numeric(as.logical(ParasiteChicks)))%>%
+  mutate(Parasitized=coalesce(Parasitized,Parasitized_NoLag))%>%
+  mutate(propBHCO=lag(ParasiteChicks)/(lag(ParasiteChicks)+lag(HostChicks)))%>%
+  mutate(propBHCO_nolag=(ParasiteChicks)/((ParasiteChicks)+(HostChicks)))%>%
+  mutate(propBHCO=coalesce(propBHCO,propBHCO_nolag))%>%
+  mutate(TotalNestling=lag(ParasiteChicks)+lag(HostChicks))%>%
+  mutate(TotalNestling_nolag=ParasiteChicks+HostChicks)%>%
+  mutate(TotalNestling=coalesce(TotalNestling,TotalNestling_nolag))%>%
+  ungroup()
+
+
+
 
 # _____________________________________________________####
 ####3. Analysis for ESA  - DICK ####
@@ -261,7 +378,7 @@ samplesize2=ProvDataSession%>%
 samplesize2
 
 #c) number of nests in nest survival analysis
-samplesize5=Survival%>%
+samplesize5=NestChecks%>%
   group_by(Year,NestID)%>%
   summarize_at(vars(Survived),first)%>%
   group_by(Year)%>%
@@ -360,19 +477,19 @@ NestContents_Mods_DICK= function(df) {
 NestContents_Mods_DICK(ProvDataSession)
 
 Veg_Mods_DICK = function(df) {
-  Null                      = glmmTMB(Beh_per_h ~ 1             + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  FEAR5                     = glmmTMB(Beh_per_h ~ FEAR_5        + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  FEAR25                    = glmmTMB(Beh_per_h ~ FEAR_25       + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  FEARPasture               = glmmTMB(Beh_per_h ~ FEAR_Pasture  + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  CSG5                      = glmmTMB(Beh_per_h ~ CSG_5         + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  CSG25                     = glmmTMB(Beh_per_h ~ CSG_25        + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  CSGPasture                = glmmTMB(Beh_per_h ~ CSG_Pasture   + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  WSG5                      = glmmTMB(Beh_per_h ~ WSG_5         + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  WSG25                     = glmmTMB(Beh_per_h ~ WSG_25        + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  WSGPasture                = glmmTMB(Beh_per_h ~ WSG_Pasture   + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  Forb5                     = glmmTMB(Beh_per_h ~ Forb_5        + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  Forb25                    = glmmTMB(Beh_per_h ~ Forb_25       + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
-  ForbPasture               = glmmTMB(Beh_per_h ~ Forb_Pasture  + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  Null                      = glmmTMB(Beh_per_h ~ 1             + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR5                     = glmmTMB(Beh_per_h ~ FEAR_5        + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEAR25                    = glmmTMB(Beh_per_h ~ FEAR_25       + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  FEARPasture               = glmmTMB(Beh_per_h ~ FEAR_Pasture  + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG5                      = glmmTMB(Beh_per_h ~ CSG_5         + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSG25                     = glmmTMB(Beh_per_h ~ CSG_25        + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  CSGPasture                = glmmTMB(Beh_per_h ~ CSG_Pasture   + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG5                      = glmmTMB(Beh_per_h ~ WSG_5         + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSG25                     = glmmTMB(Beh_per_h ~ WSG_25        + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  WSGPasture                = glmmTMB(Beh_per_h ~ WSG_Pasture   + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb5                     = glmmTMB(Beh_per_h ~ Forb_5        + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  Forb25                    = glmmTMB(Beh_per_h ~ Forb_25       + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
+  ForbPasture               = glmmTMB(Beh_per_h ~ Forb_Pasture  + AvgAgeDays + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=df, family="gaussian")
   
   mods=list(Null,   FEAR5,   FEAR25,    FEARPasture,   CSG5,     CSG25,      CSGPasture,   WSG5,   WSG25,   WSGPasture,Forb5,   Forb25,   ForbPasture)  
   names=c( "Null", "FEAR5", "FEAR25",  "FEARPasture", "CSG5",   "CSG25",    "CSGPasture", "WSG5", "WSG25", "WSGPasture","Forb5", "Forb25", "ForbPasture")
@@ -381,10 +498,8 @@ Veg_Mods_DICK = function(df) {
 
 Veg_Mods_DICK(ProvDataSession)
 
-Prov_Top = glmmTMB(Beh_per_h ~ Robel_25 + CSG_25 + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
-summary(Prov_Top)
 
-Prov_Top = glmmTMB(Beh_per_h ~ + CSG_25 + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
+Prov_Top = glmmTMB(Beh_per_h ~ CSG_25 + TotalNestling + as.factor(Parasitized) + AvgAgeDays + (1|PasturePatchYear),  data=ProvDataSession, family="gaussian")
 summary(Prov_Top)
 
 
@@ -560,60 +675,13 @@ Paras_Plot_Beg=ggplot(data=Paras_Pred_Beg, y=Predicted*100, x=NumBHCO)+
   #annotate(geom="text", x=1.9, y=51, label= "*",size=12)+
   theme_line()+
   ggtitle("")+
-  labs(y="% Time Spent Begging",x="Number of BHCO")
+  labs(y="Percent time spent begging",x="Number of Cowbirds")
 print(Paras_Plot_Beg)
 
 
-
+ggsave("Parasitism_Begging.jpeg",Paras_Plot_Beg,dpi=600,units="in", h=5,w=4.5)
 
 ####4d. Nest survival analysis#### Jaime will need to do ####
-
-#https://rpubs.com/bbolker/logregexp
-#also https://www.perrywilliams.us/wp-content/uploads/2018/03/Crimmins2016factors.pdf
-#got the idea to use cloglog here: https://stats.stackexchange.com/questions/148699/modelling-a-binary-outcome-when-census-interval-varies
-
-Nuisance_Mods_Survival= function(df) {
-  Null                   = glmmTMB(Survived ~ 1         + offset(log(ExpDays)),  data=df, family=binomial(link="cloglog"))
-  Date                   = glmmTMB(Survived ~ OrdDate   + offset(log(ExpDays)),  data=df, family=binomial(link="cloglog"))
-  
-  mods=list(Null,   Date)  
-  names=c( "Null", "Date")
-  
-  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
-
-Nuisance_Mods_Survival(Survival)
-
-
-Veg_Mods_Survive = function(df) {
-  Null                      = glmmTMB(Survived ~ 1             + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  FEAR5                     = glmmTMB(Survived ~ FEAR_5        + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  FEAR25                    = glmmTMB(Survived ~ FEAR_25       + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  FEARPasture               = glmmTMB(Survived ~ FEAR_Pasture  + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  CSG5                      = glmmTMB(Survived ~ CSG_5         + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  CSG25                     = glmmTMB(Survived ~ CSG_25        + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  CSGPasture                = glmmTMB(Survived ~ CSG_Pasture   + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  WSG5                      = glmmTMB(Survived ~ WSG_5         + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  WSG25                     = glmmTMB(Survived ~ WSG_25        + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  WSGPasture                = glmmTMB(Survived ~ WSG_Pasture   + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  Forb5                     = glmmTMB(Survived ~ Forb_5        + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  Forb25                    = glmmTMB(Survived ~ Forb_25       + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  ForbPasture               = glmmTMB(Survived ~ Forb_Pasture  + OrdDate + offset(log(ExpDays)) + (1|PasturePatchYear),  data=df, family=binomial(link="cloglog"))
-  
-  mods=list(Null,   FEAR5,   FEAR25,    FEARPasture,   CSG5,     CSG25,      CSGPasture,   WSG5,   WSG25,   WSGPasture,Forb5,   Forb25,   ForbPasture)  
-  names=c( "Null", "FEAR5", "FEAR25",  "FEARPasture", "CSG5",   "CSG25",    "CSGPasture", "WSG5", "WSG25", "WSGPasture","Forb5", "Forb25", "ForbPasture")
-  
-  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
-
-Veg_Mods_Survive(Survival)
-
-Survive_Model_Forb=glmmTMB(Survived~Forb_25+WSG_25+offset(log(ExpDays)), data=Survival,family=binomial(link="cloglog"))
-Survive_Model_FEAR=glmmTMB(Survived~FEAR_Pasture+offset(log(ExpDays)), data=Survival,family=binomial(link="cloglog"))
-
-
-
-summary(Survive_Model_Forb)
-summary(Survive_Model_FEAR)
-
 
 #https://rpubs.com/bbolker/logregexp
 #also https://www.perrywilliams.us/wp-content/uploads/2018/03/Crimmins2016factors.pdf
@@ -648,54 +716,148 @@ logexp <- function(exposure = 1) {
             class = "link-glm")}
 
 
-m_glm <- glm(Survived~Forb_Pasture,
-             family=binomial(link=logexp(Survival$ExpDays)),
-             data=Survival,start=c(1,0))
-summary(m_glm)
+Nuisance_Mods_Survival= function(df) {
+  Null                   = glm(Survived ~ 1                  , family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  Pasture                = glm(Survived ~ Pasture            , family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  Stage                  = glm(Survived ~ Stage2              , family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  Pasture_Patch          = glm(Survived ~ PasturePatch       , family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  Year                   = glm(Survived ~ as.factor(Year)    , family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  Date                   = glm(Survived ~ OrdDate            , family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  
+  mods=list(Null,   Pasture,   Stage,   Pasture_Patch,   Year,   Date)  
+  names=c( "Null", "Pasture", "Stage",   "Pasture_Patch", "Year", "Date")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
 
+Nuisance_Mods_Survival(Survival)
+
+
+Veg_Mods_Survive = function(df) {
+  Null                      = glm(Survived ~ 1             + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  FEAR5                     = glm(Survived ~ FEAR_5        + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  FEAR25                    = glm(Survived ~ FEAR_25       + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  FEARPasture               = glm(Survived ~ FEAR_Pasture  + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  CSG5                      = glm(Survived ~ CSG_5         + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  CSG25                     = glm(Survived ~ CSG_25        + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  CSGPasture                = glm(Survived ~ CSG_Pasture   + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  WSG5                      = glm(Survived ~ WSG_5         + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  WSG25                     = glm(Survived ~ WSG_25        + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  WSGPasture                = glm(Survived ~ WSG_Pasture   + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  Forb5                     = glm(Survived ~ Forb_5        + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  Forb25                    = glm(Survived ~ Forb_25       + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  ForbPasture               = glm(Survived ~ Forb_Pasture  + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=df)
+  
+  mods=list(Null,   FEAR5,   FEAR25,    FEARPasture,   CSG5,     CSG25,      CSGPasture,   WSG5,   WSG25,   WSGPasture,Forb5,   Forb25,   ForbPasture)  
+  names=c( "Null", "FEAR5", "FEAR25",  "FEARPasture", "CSG5",   "CSG25",    "CSGPasture", "WSG5", "WSG25", "WSGPasture","Forb5", "Forb25", "ForbPasture")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
+
+Veg_Mods_Survive(Survival)
+
+CSGPastureModel = glm(Survived ~ CSG_Pasture + Stage2 +PasturePatch, family=binomial(link=logexp(Survival$ExpDays)),data=Survival)
+
+confint(CSGPastureModel)
+summary(CSGPastureModel)
+
+summary(as.factor(Survival$Stage2))
 #producing predicted values
 
+..exposure <- 1
+ggpredict(CSGPastureModel,terms=c("CSG_Pasture[all]","Stage2"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
 
-ggpredict(Survive_Model_Forb,terms=c("Forb_Pasture[all]","ExpDays[1]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
-
-Forb_Pred_Survival = as.data.frame(ggpredict(Survive_Model_Forb,terms=c("Forb_25[all]","ExpDays[1]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE))
+CSG_Pred_Survival = as.data.frame(ggpredict(CSGPastureModel,terms=c("CSG_Pasture[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE))
 #turns predictions into a dataframe that we can more easily manipulate
-colnames(Forb_Pred_Survival)=c("Forb_25", "Predicted", "SE", "Lower","Upper") #renames columns 
+
+colnames(CSG_Pred_Survival)=c("CSG_Pasture", "Predicted", "SE", "Lower","Upper") #renames columns 
+
+rm(..exposure)
 
 
-Forb_Plot=ggplot(data=Forb_Pred_Survival, y=Predicted, x=Forb_25)+  
-  geom_smooth(aes(x=Forb_25, y=Predicted, ymin=Lower, ymax=Upper),color="black", fill="darkgreen", stat="identity")+
+CSG_Plot=ggplot(data=CSG_Pred_Survival, y=Predicted, x=CSG_Pasture)+  
+  geom_smooth(aes(x=CSG_Pasture, y=Predicted, ymin=Lower, ymax=Upper),color="black", fill="darkgreen", stat="identity")+
   #scale_fill_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3"))+ 
   #scale_color_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3")) +
-  #scale_x_continuous(limits=c(10,75),expand=c(0,0))+
-  #scale_y_continuous(limits = c(0,1), breaks =c(0,.2,4,.6,.8,1), expand = c(0, 0)) +
+  scale_x_continuous(expand=c(0,0))+
+  scale_y_continuous(limits=c(.55,1),expand = c(0, 0),breaks=c(.5,.6,.7,.8,.9,1)) +
   #annotate(geom="text", x=1.9, y=51, label= "*",size=12)+
   theme_line()+
-  #labs(y = "Parasitism Intensity", x="Forb percent cover within 5m")+ 
+  labs(y = "Daily Nest Survival", x="CSG percent cover on sites")+ 
   ggtitle("")
-print(Forb_Plot)
+print(CSG_Plot)
+
+ggsave("CSG_Pasture_Survival.jpeg",CSG_Plot,units="in",dpi=600,h=5,w=4.5)
+
+####nest survival with only nestlings to look at impact of BHCO####
 
 
+Nuisance_Mods_Survival= function(df) {
+  Null                   = glm(Survived ~ 1                  , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=df)
+  Pasture                = glm(Survived ~ Pasture            , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=df)
+  Pasture_Patch          = glm(Survived ~ PasturePatch       , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=df)
+  Year                   = glm(Survived ~ as.factor(Year)    , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=df)
+  Date                   = glm(Survived ~ OrdDate            , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=df)
+  
+  mods=list(Null,   Pasture,   Pasture_Patch,   Year,   Date)  
+  names=c( "Null", "Pasture",   "Pasture_Patch", "Year", "Date")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
 
-ggpredict(Survive_Model_Forb,terms=c("FEAR_Pasture[all]","ExpDays[1]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
+Nuisance_Mods_Survival(Survival_NestlingsOnly)
 
-FEAR_Pred_Survival = as.data.frame(ggpredict(Survive_Model_Forb,terms=c("FEAR_Pasture[all]","ExpDays[1]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE))
+NestContents_Mods_Survival= function(df) {
+  Null                   = glm(Predation ~OrdDate                              , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=df)
+  TotalNestling          = glm(Predation ~OrdDate + TotalNestling              , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=df)
+  PropBHCO               = glm(Predation ~OrdDate + propBHCO                   , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=df)
+  NumBHCO                = glm(Predation ~OrdDate + ParasiteChicks             , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=df)
+  PresBHCO               = glm(Predation ~OrdDate + as.factor(Parasitized)     , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=df)
+
+  mods=list(Null,   TotalNestling,   PropBHCO,    NumBHCO,   PresBHCO)  
+  names=c( "Null", "TotalNestling", "PropBHCO",  "NumBHCO", "PresBHCO")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
+
+NestContents_Mods_Survival(Survival_NestlingsOnly)
+
+
+NumBHCO               = glm(Predation ~OrdDate + as.factor(Parasitized)                   , family=binomial(link=logexp(Survival_NestlingsOnly$ExpDays)),data=Survival_NestlingsOnly)
+
+..exposure <- 1
+
+ggpredict(NumBHCO,terms=c("Parasitized[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
+
+BHCO_Pred_Survival = as.data.frame(ggpredict(NumBHCO,terms=c("Parasitized[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE))
 #turns predictions into a dataframe that we can more easily manipulate
-colnames(FEAR_Pred_Survival)=c("FEAR_Pasture", "Predicted", "SE", "Lower","Upper") #renames columns 
 
-FEAR_Plot=ggplot(data=FEAR_Pred_Survival, y=Predicted, x=FEAR_Pasture)+  
-  geom_smooth(aes(x=FEAR_Pasture, y=Predicted, ymin=Lower, ymax=Upper),color="black", fill="darkgreen", stat="identity")+
+colnames(BHCO_Pred_Survival)=c("Parasitized", "Predicted", "SE", "Lower","Upper") #renames columns 
+
+rm(..exposure)
+
+dodge=position_dodge(20)
+Paras_Plot=ggplot(data=BHCO_Pred_Survival, y=Predicted, x=as.factor(Parasitized))+  
+  geom_bar(aes(x=as.factor(Parasitized), y=Predicted, fill=as.factor(Parasitized),alpha=.1),  stat="identity")+
+  geom_errorbar(aes(x = as.factor(Parasitized), ymin = Lower, ymax = Upper, group = as.factor(Parasitized)), position = dodge, width = 0.2)+
+  scale_fill_manual(values=c("aquamarine4","salmon4")) +
+  
   #scale_fill_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3"))+ 
   #scale_color_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3")) +
- # scale_x_continuous(limits=c(10,75),expand=c(0,0))+
-  #scale_y_continuous(limits = c(0,1), breaks =c(0,.2,4,.6,.8,1), expand = c(0, 0)) +
+  scale_x_discrete(labels=c("Not Parasitized","Parasitized"))+
+  scale_y_continuous( expand = c(0, 0)) +
   #annotate(geom="text", x=1.9, y=51, label= "*",size=12)+
-  theme_line()+
-  #labs(y = "Parasitism Intensity", x="FEAR percent cover within 5m")+ 
-  ggtitle("")
-print(FEAR_Plot)
+  theme(text=element_text(size=14),
+        axis.title.y=element_text(face="bold", size=14),
+        #axis.title.x=element_blank(),
+        axis.text=element_text(size=10,color="black"),
+        axis.line=element_line(color="black",size=0.75),
+        panel.background=element_rect("snow2"),
+        panel.grid=element_blank(),
+        legend.position="none",
+        axis.ticks.x = element_blank())+
+  theme_bar_noleg()+
+  ggtitle("")+
+  labs(y="Daily predation probability",x=" ")
+print(Paras_Plot)
 
-
+ggsave("Paras_Predation.jpeg",Paras_Plot,dpi=600,units="in",h=5,w=4.5)
 
 ####4e. Impact of vegetation on parasitism####
 
@@ -732,12 +894,15 @@ Veg_Mods_Checks = function(df) {
 Veg_Mods_Checks(NestChecks)
 
 
+Forb_Top_Checks = glmmTMB(MaxBHCO ~ Forb_5+(1|PasturePatchYear),  data=NestChecks, family="poisson")
 
-Forb_Top_Checks = glmmTMB(MaxBHCO ~ Forb_5 + (1|PasturePatchYear),  data=NestChecks, family="poisson")
+confint(Forb_Top_Checks)
+
+
 summary(Forb_Top_Checks)
-
-ggpredict(Forb_Top_Checks,terms=c("Forb_5[0,10,20,30,40,50,60,70,80,90]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
-Forb_Pred_Checks = as.data.frame(ggpredict(Forb_Top_Checks,terms=c("Forb_5[0,10,20,30,40,50,60,70,80,90]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
+confint (Forb_Top_Checks,level=.85)
+ggpredict(Forb_Top_Checks,terms=c("Forb_5[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
+Forb_Pred_Checks = as.data.frame(ggpredict(Forb_Top_Checks,terms=c("Forb_5[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
 )
 #turns predictions into a dataframe that we can more easily manipulate
 colnames(Forb_Pred_Checks)=c("Forb_5", "Predicted", "SE", "Lower","Upper") #renames columns 
@@ -747,15 +912,15 @@ Forb_Plot=ggplot(data=Forb_Pred_Checks, y=Predicted, x=Forb_5)+
   geom_smooth(aes(x=Forb_5, y=Predicted, ymin=Lower, ymax=Upper),color="black", fill="darkgreen", stat="identity")+
   #scale_fill_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3"))+ 
   #scale_color_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3")) +
-  scale_x_continuous(limits=c(10,90),expand=c(0,0))+
+  scale_x_continuous(expand=c(0,0))+
   scale_y_continuous(limits = c(0,1.2), breaks =c(0,.2,4,.6,.8,1), expand = c(0, 0)) +
   #annotate(geom="text", x=1.9, y=51, label= "*",size=12)+
   theme_line()+
-  labs(y = "Parasitism Intensity", x="Forb percent cover within 5m")+ 
+  labs(y = "# Cowbirds in Nest", x="Forb % cover within 5m")+ 
   ggtitle("")
 print(Forb_Plot)
 
-
+ggsave("Forb_5_Parasitism.jpeg", Forb_Plot,units="in",dpi=600,h=5,w=4.5)
 #CSG
 
 CSG_Top_Checks = glmmTMB(MaxBHCO ~ CSG_5 + (1|PasturePatchYear),  data=NestChecks, family="poisson")
@@ -1147,5 +1312,101 @@ Forb_Plot_perchick=ggplot(data=Forb_Pred_perchick, y=Predicted, x=Forb_Pasture)+
   labs(y = "Provisioning per hour per chick", x="Forb percent cover (site)")+ 
   ggtitle("")
 print(Forb_Plot_perchick)
+
+####4i. Fledgling Production ####
+
+
+Veg_Mods_Fledge = function(df) {
+  Null                      = glmmTMB(EstFledglings ~ 1             + (1|PasturePatchYear),  data=df, family="poisson")
+  FEAR5                     = glmmTMB(EstFledglings ~ FEAR_5        + (1|PasturePatchYear),  data=df, family="poisson")
+  FEAR25                    = glmmTMB(EstFledglings ~ FEAR_25       + (1|PasturePatchYear),  data=df, family="poisson")
+  FEARPasture               = glmmTMB(EstFledglings ~ FEAR_Pasture  + (1|PasturePatchYear),  data=df, family="poisson")
+  CSG5                      = glmmTMB(EstFledglings ~ CSG_5         + (1|PasturePatchYear),  data=df, family="poisson")
+  CSG25                     = glmmTMB(EstFledglings ~ CSG_25        + (1|PasturePatchYear),  data=df, family="poisson")
+  CSGPasture                = glmmTMB(EstFledglings ~ CSG_Pasture   + (1|PasturePatchYear),  data=df, family="poisson")
+  WSG5                      = glmmTMB(EstFledglings ~ WSG_5         + (1|PasturePatchYear),  data=df, family="poisson")
+  WSG25                     = glmmTMB(EstFledglings ~ WSG_25        + (1|PasturePatchYear),  data=df, family="poisson")
+  WSGPasture                = glmmTMB(EstFledglings ~ WSG_Pasture   + (1|PasturePatchYear),  data=df, family="poisson")
+  Forb5                     = glmmTMB(EstFledglings ~ Forb_5        + (1|PasturePatchYear),  data=df, family="poisson")
+  Forb25                    = glmmTMB(EstFledglings ~ Forb_25       + (1|PasturePatchYear),  data=df, family="poisson")
+  ForbPasture               = glmmTMB(EstFledglings ~ Forb_Pasture  + (1|PasturePatchYear),  data=df, family="poisson")
+  
+  mods=list(Null,   FEAR5,   FEAR25,    FEARPasture,   CSG5,     CSG25,      CSGPasture,   WSG5,   WSG25,   WSGPasture,Forb5,   Forb25,   ForbPasture)  
+  names=c( "Null", "FEAR5", "FEAR25",  "FEARPasture", "CSG5",   "CSG25",    "CSGPasture", "WSG5", "WSG25", "WSGPasture","Forb5", "Forb25", "ForbPasture")
+  
+  print(aictab(cand.set = mods, modnames = names,second.ord = FALSE), digits = 4) }
+
+Veg_Mods_Fledge(Fledgies)
+
+
+CSG_Top_perchick = glmmTMB(EstFledglings ~ CSG_Pasture + (1|PasturePatchYear),  data=Fledgies, family="poisson")
+summary(CSG_Top_perchick)
+
+ggpredict(CSG_Top_perchick,terms=c("CSG_Pasture[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
+CSG_Pred_perchick= as.data.frame(ggpredict(CSG_Top_perchick,terms=c("CSG_Pasture[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
+)
+#turns predictions into a dataframe that we can more easily manipulate
+colnames(CSG_Pred_perchick)=c("CSG_Pasture", "Predicted", "SE", "Lower","Upper") #renames columns 
+CSG_Pred_perchick
+
+CSG_Plot_perchick=ggplot(data=CSG_Pred_perchick, y=Predicted, x=CSG_Pasture)+  
+  geom_smooth(aes(x=CSG_Pasture, y=Predicted, ymin=Lower, ymax=Upper),color="black", fill="darkgreen", stat="identity")+
+  #scale_fill_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3"))+ 
+  #scale_color_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3")) +
+  scale_x_continuous(limits=c(0,40),expand=c(0,0))+
+  #scale_y_continuous(limits = c(0,1.2), breaks =c(0,.2,4,.6,.8,1), expand = c(0, 0)) +
+  #annotate(geom="text", x=1.9, y=51, label= "*",size=12)+
+  theme_line()+
+  labs(y = "Fledgling Production", x="CSG percent cover (site)")+ 
+  ggtitle("")
+print(CSG_Plot_perchick)
+
+
+FEAR_Top_perchick = glmmTMB(EstFledglings ~ FEAR_Pasture + (1|PasturePatchYear),  data=Fledgies, family="poisson")
+summary(FEAR_Top_perchick)
+
+ggpredict(FEAR_Top_perchick,terms=c("FEAR_Pasture[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
+FEAR_Pred_perchick= as.data.frame(ggpredict(FEAR_Top_perchick,terms=c("FEAR_Pasture[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
+)
+#turns predictions into a dataframe that we can more easily manipulate
+colnames(FEAR_Pred_perchick)=c("FEAR_Pasture", "Predicted", "SE", "Lower","Upper") #renames columns 
+FEAR_Pred_perchick
+
+FEAR_Plot_perchick=ggplot(data=FEAR_Pred_perchick, y=Predicted, x=FEAR_Pasture)+  
+  geom_smooth(aes(x=FEAR_Pasture, y=Predicted, ymin=Lower, ymax=Upper),color="black", fill="darkgreen", stat="identity")+
+  #scale_fill_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3"))+ 
+  #scale_color_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3")) +
+  scale_x_continuous(limits=c(0,40),expand=c(0,0))+
+  #scale_y_continuous(limits = c(0,1.2), breaks =c(0,.2,4,.6,.8,1), expand = c(0, 0)) +
+  #annotate(geom="text", x=1.9, y=51, label= "*",size=12)+
+  theme_line()+
+  labs(y = "Fledgling Production", x="FEAR percent cover (site)")+ 
+  ggtitle("")
+print(FEAR_Plot_perchick)
+
+
+
+Forb_Top_perchick = glmmTMB(EstFledglings ~ Forb_Pasture + (1|PasturePatchYear),  data=Fledgies, family="poisson")
+summary(Forb_Top_perchick)
+
+ggpredict(Forb_Top_perchick,terms=c("Forb_Pasture[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
+Forb_Pred_perchick= as.data.frame(ggpredict(Forb_Top_perchick,terms=c("Forb_Pasture[all]"),ci.lvl=0.85, back.transform=TRUE, append=TRUE)
+)
+#turns predictions into a dataframe that we can more easily manipulate
+colnames(Forb_Pred_perchick)=c("Forb_Pasture", "Predicted", "SE", "Lower","Upper") #renames columns 
+Forb_Pred_perchick
+
+Forb_Plot_perchick=ggplot(data=Forb_Pred_perchick, y=Predicted, x=Forb_Pasture)+  
+  geom_smooth(aes(x=Forb_Pasture, y=Predicted, ymin=Lower, ymax=Upper),color="black", fill="darkgreen", stat="identity")+
+  #scale_fill_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3"))+ 
+  #scale_color_manual(name = "Method", labels = c("Sweep", "Vacuum"), values=c("turquoise4","orange3")) +
+  #scale_x_continuous(limits=c(0,40),expand=c(0,0))+
+  #scale_y_continuous(limits = c(0,1.2), breaks =c(0,.2,4,.6,.8,1), expand = c(0, 0)) +
+  #annotate(geom="text", x=1.9, y=51, label= "*",size=12)+
+  theme_line()+
+  labs(y = "Fledgling Production", x="Forb percent cover (site)")+ 
+  ggtitle("")
+print(Forb_Plot_perchick)
+
 
 
